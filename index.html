@@ -102,6 +102,33 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
 .spin{width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:s 1s linear infinite}
 @keyframes s{to{transform:rotate(360deg)}}
 @media (min-width:700px){.tiles{grid-template-columns:repeat(4,1fr)}}
+.chip.b{background:#E2EFDA;color:var(--green)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+@media (min-width:600px){.seg{grid-template-columns:repeat(4,1fr)}}
+.seg button{padding:9px 8px;border:1px solid #9DC3E6;background:#fff;color:var(--navy);border-radius:20px;cursor:pointer;white-space:nowrap;font-weight:600}
+.seg button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.seg .cnt{font-size:11px;opacity:.75;margin-inline-start:3px}
+.doc{background:var(--card);border-radius:12px;padding:10px 12px;border:1px solid var(--line)}
+.doc+.doc{margin-top:8px}
+.doc.ret{border-inline-start:4px solid var(--orange)}
+.doc.ord{border-inline-start:4px solid var(--navy2)}
+.dh{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.dh .k{font-weight:700}
+.dh .d{font-size:12px;color:var(--mute)}
+.items{margin-top:7px;border-top:1px dashed var(--line);padding-top:6px}
+.it{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:2px 0}
+.it .c{color:var(--mute);font-size:12px}
+.inv{background:var(--card);border-radius:12px;padding:11px 12px;border:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.inv+.inv{margin-top:8px}
+.inv .ic{width:38px;height:38px;border-radius:10px;background:#FDE2E2;color:var(--red);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex:0 0 auto}
+.inv .tt{flex:1;min-width:0}
+.inv .tt b{display:block;font-size:14px}
+.inv .tt span{font-size:12px;color:var(--mute)}
+.dl{border:0;background:var(--navy);color:#fff;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.dl:disabled{opacity:.6}
+.bigbal{background:var(--card);border-radius:14px;padding:14px;text-align:center;margin-bottom:10px;border-top:4px solid var(--green)}
+.bigbal span{display:block;color:var(--mute);font-size:13px}
+.bigbal b{display:block;font-size:26px;color:var(--green);margin:4px 0}
 </style>
 </head>
 <body>
@@ -163,7 +190,13 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
           <div><span>مستخدم</span><b class="num minus" id="s2"></b></div>
         </div>
       </div>
-      <div class="qb">
+      <div class="seg" id="seg">
+        <button data-p="st" class="on">كشف الحساب</button>
+        <button data-p="ord">أوردرات ومرتجعات<span class="cnt" id="cO"></span></button>
+        <button data-p="inv">الفواتير<span class="cnt" id="cI"></span></button>
+        <button data-p="bank">البنك</button>
+      </div>
+      <div class="qb" id="qbx">
         <button data-r="all" class="on">كل الفترات</button>
         <button data-r="month">الشهر ده</button>
         <button data-r="custom">فترة معينة</button>
@@ -173,6 +206,15 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
         <div><label>إلى</label><input type="date" id="dt"></div>
       </div>
       <div id="txs"></div>
+      <div id="pord" class="hide">
+        <div class="qb" id="kb">
+          <button data-k="" class="on">الكل</button><button data-k="order">أوردرات</button><button data-k="return">مرتجعات</button>
+        </div>
+        <div class="sum" id="osum" style="margin:0 0 10px;background:var(--card);border-radius:14px;padding:10px"></div>
+        <div id="ords"></div>
+      </div>
+      <div id="pinv" class="hide"><div id="invs"></div></div>
+      <div id="pbank" class="hide"><div id="banks"></div></div>
     </div>
   </main>
 </section>
@@ -194,6 +236,28 @@ const fmt = n => Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,ma
 const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 let tok = null, refreshTok = null, expAt = 0;
+let extra = {orders:[], bank_balances:[], invoices:[]}, xsig = null, pane = "st", okind = "";
+const EXTRA = {
+  orders: "id,merchant_id,date,kind,doc_no,item_name,color,qty,price,amount,status,notes",
+  bank_balances: "id,merchant_id,date,balance,notes",
+  invoices: "id,merchant_id,file_path,file_name,invoice_no,pages,created_at"
+};
+async function extraSig(){
+  const out = [];
+  for (const t in EXTRA){
+    try{ const j = await api(`/rest/v1/${t}?select=updated_at&order=updated_at.desc&limit=1`); out.push(j && j[0] ? j[0].updated_at : ""); }
+    catch(e){ if (e.net) throw e; out.push("x"); }
+  }
+  return JSON.stringify(out);
+}
+async function fetchExtra(){
+  const d = {};
+  for (const t in EXTRA){
+    try{ d[t] = await getAll(`/rest/v1/${t}?select=${EXTRA[t]}&deleted_at=is.null&order=id`); }
+    catch(e){ if (e.net) throw e; d[t] = []; }
+  }
+  return d;
+}
 let data = null, sig = null, changed = new Set(), cur = null, lastOk = null, timer = null, range = "all";
 
 /* ---------------- API ---------------- */
@@ -253,6 +317,7 @@ $("lform").addEventListener("submit", async ev => {
 function showLogin(msg){
   stopPoll();
   tok = refreshTok = null; data = null; sig = null; changed = new Set(); cur = null;
+  extra = {orders:[], bank_balances:[], invoices:[]}; xsig = null;
   $("app").classList.add("hide"); $("login").classList.remove("hide");
   $("u").value = LS.get("rmg_user") || "";
   $("lerr").textContent = msg || "";
@@ -287,11 +352,15 @@ async function load(force){
     const me = await getAll("/rest/v1/supervisors?select=display_name,username");
     const ms = await getAll("/rest/v1/merchants_pub?select=*&order=name");
     const s = JSON.stringify(ms.map(m=>[m.id,m.updated_at]).sort());
+    await ensure();
+    const xs = await extraSig();
+    let xch = false;
+    if (force || xs !== xsig || s !== sig){ extra = await fetchExtra(); xsig = xs; xch = true; }
     if (force || s !== sig){
       const tx = await getAll("/rest/v1/tx_pub?select=merchant_id,date,type,amount,notes,balance,seq&order=merchant_id,seq");
       sig = s;
       apply(me, ms, tx);
-    }
+    } else if (xch){ renderList(); if (cur != null) renderSt(); }
     lastOk = new Date(); offline(false); age();
   }catch(e){
     if (e.status === 401 || e.status === 403 && /jwt/i.test(e.message)) { LS.set("rmg_rt", null); showLogin("انتهت الجلسة — ادخل تاني"); }
@@ -376,6 +445,7 @@ function renderList(){
         <span class="chip">بواقي <span class="num">${fmt(m.op)}</span></span>
         <span class="chip">حوافز <span class="num">${fmt(m.inc)}</span></span>
         <span class="chip o">مستخدم <span class="num">${fmt(m.used)}</span></span>
+        ${(()=>{const b=lastBank(m.id); return b?`<span class="chip b">🏦 بنك <span class="num">${fmt(b.balance)}</span></span>`:""})()}
         ${m.bad?`<span class="chip r">⚠ مشكلة ورق${m.note?" — "+esc(m.note):""}</span>`:""}
       </div>
     </button>`).join("") : `<div class="empty">${data.ms.length ? "مفيش محلات بالبحث ده" : "مفيش محلات مخصصة ليك لسه — كلّم الإدارة"}</div>`;
@@ -388,13 +458,86 @@ $("list").addEventListener("click", e => {
 });
 
 /* ---------------- statement view ---------------- */
-function showList(){ cur = null; $("vst").classList.add("hide"); $("vlist").classList.remove("hide"); renderList(); }
+function lastBank(id){
+  let b = null;
+  for (const r of extra.bank_balances) if (r.merchant_id === id && (!b || r.date > b.date || (r.date === b.date && r.id > b.id))) b = r;
+  return b;
+}
+$("seg").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  pane = b.dataset.p;
+  document.querySelectorAll("#seg button").forEach(x=>x.classList.toggle("on", x===b));
+  renderSt();
+});
+$("kb").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  okind = b.dataset.k;
+  document.querySelectorAll("#kb button").forEach(x=>x.classList.toggle("on", x===b));
+  renderSt();
+});
+const KINDS = {order:"أوردر", return:"مرتجع"};
+function renderOrders(m, a, b){
+  const rows = extra.orders.filter(r => r.merchant_id === m.id && r.date >= a && r.date <= b && (!okind || r.kind === okind));
+  const docs = new Map();
+  for (const r of rows){ const k = r.kind + "|" + (r.doc_no || ("#" + r.id)); if (!docs.has(k)) docs.set(k, []); docs.get(k).push(r); }
+  const o = rows.filter(r=>r.kind==="order"), rt = rows.filter(r=>r.kind==="return");
+  const S = (xs,f)=>xs.reduce((a,r)=>a+Number(r[f]||0),0);
+  const so = S(o,"amount"), sr = S(rt,"amount");
+  $("osum").innerHTML = `<div><span>أوردرات (${new Set(o.map(r=>r.doc_no||r.id)).size}) — ${S(o,"qty").toLocaleString("en-US")} قطعة</span><b class="num plus">${fmt(so)}</b></div>
+    <div><span>مرتجعات (${new Set(rt.map(r=>r.doc_no||r.id)).size}) — ${S(rt,"qty").toLocaleString("en-US")} قطعة</span><b class="num minus">${fmt(sr)}</b></div>
+    <div style="grid-column:1/-1"><span>الصافي</span><b class="num">${fmt(so-sr)}</b></div>`;
+  const list = [...docs.values()].sort((x,y)=> (y[0].date+y[0].id) > (x[0].date+x[0].id) ? 1 : -1);
+  $("ords").innerHTML = list.length ? list.map(rs => { const r0 = rs[0], ret = r0.kind === "return"; return `
+    <div class="doc ${ret?"ret":"ord"}">
+      <div class="dh">
+        <div><div class="d num">${esc(r0.date)}${r0.status?" • "+esc(r0.status):""}</div><div class="k">${KINDS[r0.kind]||r0.kind} <span class="num">${esc(r0.doc_no)}</span></div></div>
+        <div class="a" style="text-align:left"><b class="num ${ret?"minus":"plus"}">${fmt(S(rs,"amount"))}</b><div class="d">${S(rs,"qty").toLocaleString("en-US")} قطعة</div></div>
+      </div>
+      <div class="items">${rs.map(r=>`<div class="it"><div>${esc(r.item_name||"—")} <span class="c">${esc(r.color||"")}</span></div><div class="num">${Number(r.qty||0)} × ${fmt(r.price)}</div></div>`).join("")}</div>
+    </div>`; }).join("") : `<div class="empty">مفيش أوردرات أو مرتجعات في الفترة دي</div>`;
+}
+function renderInv(m){
+  const rows = extra.invoices.filter(r => r.merchant_id === m.id).sort((x,y)=>y.id-x.id);
+  $("invs").innerHTML = rows.length ? rows.map(r=>`
+    <div class="inv">
+      <div class="ic">PDF</div>
+      <div class="tt"><b>${esc(r.invoice_no || "فاتورة")}</b><span>${r.pages} صفحة • اترفعت <span class="num">${esc(String(r.created_at||"").slice(0,10))}</span></span></div>
+      <button class="dl" data-id="${r.id}">⬇ تحميل</button>
+    </div>`).join("") : `<div class="empty">مفيش فواتير متسجلة للمحل ده</div>`;
+}
+$("invs").addEventListener("click", async e => {
+  const b = e.target.closest(".dl"); if (!b) return;
+  const r = extra.invoices.find(x => x.id === +b.dataset.id); if (!r) return;
+  b.disabled = true; const old = b.textContent; b.textContent = "…";
+  try{
+    await ensure();
+    const res = await fetch(SB_URL + "/storage/v1/object/authenticated/invoices/" + r.file_path.split("/").map(encodeURIComponent).join("/"),
+                            {headers:{apikey:SB_KEY, Authorization:"Bearer " + tok}});
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const blob = new Blob([await res.blob()], {type:"application/pdf"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = r.file_name || "invoice.pdf";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }catch(err){ alert("مش قادر أحمّل الفاتورة — " + (err.message || "")); }
+  b.disabled = false; b.textContent = old;
+});
+function renderBank(m){
+  const rows = extra.bank_balances.filter(r => r.merchant_id === m.id).sort((x,y)=> x.date === y.date ? x.id - y.id : (x.date < y.date ? -1 : 1));
+  if (!rows.length){ $("banks").innerHTML = `<div class="empty">مفيش رصيد بنك متسجل للمحل ده</div>`; return; }
+  const last = rows[rows.length-1];
+  const hist = rows.map((r,i)=>({...r, ch: i ? Number(r.balance) - Number(rows[i-1].balance) : null})).reverse();
+  $("banks").innerHTML = `<div class="bigbal"><span>آخر رصيد بنك</span><b class="num">${fmt(last.balance)}</b><span class="num">بتاريخ ${esc(last.date)}</span></div>` +
+    hist.map(r=>`<div class="tx"><div><div class="d num">${esc(r.date)}</div>${r.notes?`<div class="n">${esc(r.notes)}</div>`:""}</div>
+      <div class="a"><b class="num">${fmt(r.balance)}</b>${r.ch==null?"":`<span class="num ${r.ch<0?"minus":"plus"}">${r.ch<0?"−":"+"}${fmt(Math.abs(r.ch))}</span>`}</div></div>`).join("");
+}
+function showList(){ cur = null; extra = extra || {orders:[], bank_balances:[], invoices:[]}; $("vst").classList.add("hide"); $("vlist").classList.remove("hide"); renderList(); }
 function showSt(){ $("vlist").classList.add("hide"); $("vst").classList.remove("hide"); renderSt(); window.scrollTo(0,0); }
 $("bk").onclick = showList;
 window.addEventListener("popstate", ()=>{ if (cur != null) showList(); });
-document.querySelectorAll(".qb button").forEach(b => b.onclick = () => {
+document.querySelectorAll("#qbx button").forEach(b => b.onclick = () => {
   range = b.dataset.r;
-  document.querySelectorAll(".qb button").forEach(x=>x.classList.toggle("on", x===b));
+  document.querySelectorAll("#qbx button").forEach(x=>x.classList.toggle("on", x===b));
   $("rng").classList.toggle("hide", range !== "custom");
   if (range === "custom" && !$("df").value){
     const d = new Date(); $("dt").value = d.toISOString().slice(0,10);
@@ -414,7 +557,19 @@ function renderSt(){
   $("smeta").textContent = m.code + (m.region ? " • " + m.region : "");
   $("spaper").classList.toggle("hide", !m.bad);
   $("spaper").textContent = "⛔ المحل ده عنده مشكلة في الورق" + (m.note ? " — " + m.note : "");
+  $("cO").textContent = (()=>{const n = new Set(extra.orders.filter(r=>r.merchant_id===m.id).map(r=>r.kind+(r.doc_no||r.id))).size; return n ? `(${n})` : "";})();
+  $("cI").textContent = (()=>{const n = extra.invoices.filter(r=>r.merchant_id===m.id).length; return n ? `(${n})` : "";})();
   const [a,b] = bounds();
+  $("qbx").classList.toggle("hide", pane === "inv" || pane === "bank");
+  $("rng").classList.toggle("hide", range !== "custom" || pane === "inv" || pane === "bank");
+  document.querySelector(".shead .sum").classList.toggle("hide", pane !== "st");
+  $("txs").classList.toggle("hide", pane !== "st");
+  $("pord").classList.toggle("hide", pane !== "ord");
+  $("pinv").classList.toggle("hide", pane !== "inv");
+  $("pbank").classList.toggle("hide", pane !== "bank");
+  if (pane === "ord") return renderOrders(m, a, b);
+  if (pane === "inv") return renderInv(m);
+  if (pane === "bank") return renderBank(m);
   let before = 0, add = 0, used = 0; const rows = [];
   for (const t of m.tx){
     if (t.date < a) before = t.balance;
