@@ -140,7 +140,7 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
     <h1>حوافز التجار</h1>
     <p class="sub">عرض فقط — للمشرفين</p>
     <label for="u">اليوزر</label>
-    <input id="u" type="text" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" inputmode="email" required>
+    <input id="u" type="text" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="اليوزر أو اسمك (للأريا مانجر)" required>
     <label for="p">الباسورد</label>
     <input id="p" type="password" name="password" autocomplete="current-password" required>
     <label class="chk"><input type="checkbox" id="rem" checked> افتكرني على الجهاز ده</label>
@@ -233,6 +233,21 @@ const LS = {
   set(k,v){ try{ v==null ? localStorage.removeItem(k) : localStorage.setItem(k,v) }catch(e){} }
 };
 const fmt = n => Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+/* بحث مرن: أ/ا، ة/ه، ى/ي، المسافات، الكابيتال — وكل كلمة بأي ترتيب */
+const normAr = s => String(s??"").normalize("NFKC").toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g,"")
+  .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/ؤ/g,"و").replace(/ئ/g,"ي").replace(/[^\p{L}\p{N}]/gu,"");
+const words = t => String(t||"").split(/\s+/).map(w=>{ let k = normAr(w); if (k.startsWith("ال") && k.length > 4) k = k.slice(2); return k; }).filter(Boolean);
+/* اليوزر بالعربي (اسم الأريا مانجر) بيتحوّل لكود ثابت — نفس قاعدة البرنامج */
+const normPw = p => String(p||"").replace(/\s+/g,"").toLowerCase()
+  .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+async function userEmail(u){
+  const s = String(u||"").trim().toLowerCase();
+  if (/^[a-z0-9._-]+$/.test(s)) return `${s}@${EMAIL_DOMAIN}`;
+  const k = normAr(s);
+  if (/^[a-z0-9._-]+$/.test(k)) return `${k}@${EMAIL_DOMAIN}`;
+  const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(k));
+  return "am" + [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,24) + "@" + EMAIL_DOMAIN;
+}
 const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 let tok = null, refreshTok = null, expAt = 0;
@@ -305,7 +320,14 @@ $("lform").addEventListener("submit", async ev => {
   if (!u || !p) { $("lerr").textContent = "اكتب اليوزر والباسورد"; return; }
   $("lbtn").disabled = true; $("lerr").textContent = "";
   try{
-    const j = await api("/auth/v1/token?grant_type=password",{method:"POST",auth:false,body:{email:`${u}@${EMAIL_DOMAIN}`,password:p}});
+    const em = await userEmail(u);
+    let j;
+    try { j = await api("/auth/v1/token?grant_type=password",{method:"POST",auth:false,body:{email:em,password:p}}); }
+    catch(e1){
+      const p2 = normPw(p);
+      if (e1.net || e1.status !== 400 || p2 === p) throw e1;
+      j = await api("/auth/v1/token?grant_type=password",{method:"POST",auth:false,body:{email:em,password:p2}});
+    }
     LS.set("rmg_user", u);
     if (!$("rem").checked) LS.set("rmg_rt", null);
     take(j, $("rem").checked);
@@ -425,8 +447,8 @@ function regions(){
   sel.classList.toggle("hide", rs.length < 2);
 }
 function visible(){
-  const q = $("q").value.trim().toLowerCase(), r = $("reg").value;
-  return data.ms.filter(m => (!q || `${m.code} ${m.name} ${m.region}`.toLowerCase().includes(q)) && (!r || m.region === r));
+  const ws = words($("q").value), r = $("reg").value;
+  return data.ms.filter(m => { const h = normAr(`${m.code} ${m.name} ${m.region}`); return ws.every(w => h.includes(w)) && (!r || m.region === r); });
 }
 function renderList(){
   if (!data) return;
