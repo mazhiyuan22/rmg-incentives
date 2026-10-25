@@ -102,6 +102,20 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
 .spin{width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:s 1s linear infinite}
 @keyframes s{to{transform:rotate(360deg)}}
 @media (min-width:700px){.tiles{grid-template-columns:repeat(4,1fr)}}
+.sum .endbal{background:#E2EFDA}
+.sum .endbal b{color:var(--green);font-size:18px}
+@media (min-width:700px){.sum{grid-template-columns:repeat(4,1fr)}}
+/* كشف الحساب: جدول مرتب بالتاريخ زي كشف البنك */
+.stmt{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.stmt table{width:100%;border-collapse:collapse;font-size:14px}
+.stmt th{background:var(--navy);color:#fff;font-weight:700;padding:9px 8px;text-align:center;white-space:nowrap}
+.stmt td{padding:9px 8px;text-align:center;border-top:1px solid var(--line);vertical-align:middle}
+.stmt td.k{font-weight:700;white-space:nowrap}
+.stmt td.n{color:var(--mute);font-size:12px;text-align:right}
+.stmt tr.edge td{background:#F2F4F7;font-weight:700}
+.stmt tr.last td{background:#E2EFDA;font-weight:800}
+.stmt .dash{color:#C0C6CF}
+@media (max-width:560px){.stmt .hn{display:none}.stmt table{font-size:13px}.stmt td,.stmt th{padding:8px 4px}}
 .chip.b{background:#E2EFDA;color:var(--green)}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
 @media (min-width:600px){.seg{grid-template-columns:repeat(4,1fr)}}
@@ -185,9 +199,9 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
         <div class="smeta" id="smeta"></div>
         <div class="sum">
           <div><span>رصيد أول الفترة</span><b class="num" id="s0"></b></div>
-          <div><span>الرصيد آخر الفترة</span><b class="num" id="s3" style="color:var(--green)"></b></div>
-          <div><span>مضاف</span><b class="num plus" id="s1"></b></div>
+          <div><span>مضاف (بواقي + حوافز)</span><b class="num plus" id="s1"></b></div>
           <div><span>مستخدم</span><b class="num minus" id="s2"></b></div>
+          <div class="endbal"><span>الرصيد المتاح آخر الفترة</span><b class="num" id="s3"></b></div>
         </div>
       </div>
       <div class="seg" id="seg">
@@ -599,12 +613,20 @@ function renderSt(){
   }
   const end = rows.length ? rows[rows.length-1].balance : before;
   $("s0").textContent = fmt(before); $("s1").textContent = fmt(add); $("s2").textContent = fmt(used); $("s3").textContent = fmt(end);
-  $("txs").innerHTML = `<div class="tx open"><div><div class="k">رصيد أول الفترة</div></div><div class="a"><b class="num">${fmt(before)}</b></div></div>` +
-    (rows.length ? rows.slice().reverse().map(t=>`
-    <div class="tx">
-      <div><div class="d num">${esc(t.date)}</div><div class="k">${TYPES[t.type]||t.type}</div>${t.notes?`<div class="n">${esc(t.notes)}</div>`:""}</div>
-      <div class="a"><b class="num ${t.type==="usage"?"minus":"plus"}">${t.type==="usage"?"−":"+"}${fmt(t.amount)}</b><span>الرصيد <span class="num">${fmt(t.balance)}</span></span></div>
-    </div>`).join("") : `<div class="empty">مفيش حركات في الفترة دي</div>`);
+  // ملاحظة الرفع (اسم الملف) مالهاش لازمة للمشرف — نعرض الملاحظات الحقيقية بس
+  const note = n => { n = String(n||"").trim(); return (/\.(xlsx|xlsm|xls|csv)\b/i.test(n) || /^(بواقي|حوافز|مستخدم)\s*-/.test(n)) ? "" : n; };
+  const dash = '<span class="dash">—</span>';
+  $("txs").innerHTML = `<div class="stmt"><table>
+    <thead><tr><th>التاريخ</th><th>الحركة</th><th>مضاف</th><th>مستخدم</th><th>الرصيد</th><th class="hn">ملاحظات</th></tr></thead><tbody>
+    <tr class="edge"><td colspan="4">رصيد أول الفترة</td><td class="num">${fmt(before)}</td><td class="hn"></td></tr>` +
+    rows.map(t=>`<tr>
+      <td class="num">${esc(t.date)}</td><td class="k">${TYPES[t.type]||t.type}</td>
+      <td class="num plus">${t.type!=="usage"?fmt(t.amount):dash}</td>
+      <td class="num minus">${t.type==="usage"?fmt(t.amount):dash}</td>
+      <td class="num"><b>${fmt(t.balance)}</b></td><td class="n hn">${esc(note(t.notes))}</td></tr>`).join("") +
+    (rows.length ? "" : `<tr><td colspan="6" class="n" style="text-align:center;padding:16px">مفيش حركات في الفترة دي</td></tr>`) +
+    `<tr class="last"><td colspan="2">الرصيد المتاح آخر الفترة</td><td class="num plus">${fmt(add)}</td><td class="num minus">${fmt(used)}</td>
+      <td class="num">${fmt(end)}</td><td class="hn"></td></tr></tbody></table></div>`;
 }
 
 boot();
