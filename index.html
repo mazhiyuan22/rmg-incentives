@@ -270,7 +270,7 @@ let tok = null, refreshTok = null, expAt = 0;
 let extra = {orders:[], bank_balances:[], invoices:[]}, xsig = null, pane = "st", okind = "";
 const EXTRA = {
   orders: "id,merchant_id,date,kind,doc_no,item_name,color,qty,price,amount,status,notes",
-  bank_balances: "id,merchant_id,date,balance,notes",
+  bank_balances: "id,merchant_id,date,balance,notes,deposit,order_amount,incentive",
   invoices: "id,merchant_id,file_path,file_name,invoice_no,pages,created_at"
 };
 async function extraSig(){
@@ -285,7 +285,12 @@ async function fetchExtra(){
   const d = {};
   for (const t in EXTRA){
     try{ d[t] = await getAll(`/rest/v1/${t}?select=${EXTRA[t]}&deleted_at=is.null&order=id`); }
-    catch(e){ if (e.net) throw e; d[t] = []; }
+    catch(e){
+      if (e.net) throw e; d[t] = [];
+      if (t === "bank_balances"){   // السيرفر لسه من غير تحديث 5
+        try{ d[t] = await getAll(`/rest/v1/${t}?select=id,merchant_id,date,balance,notes&deleted_at=is.null&order=id`); }catch(e2){}
+      }
+    }
   }
   return d;
 }
@@ -496,10 +501,10 @@ $("list").addEventListener("click", e => {
 });
 
 /* ---------------- statement view ---------------- */
-function lastBank(id){
-  let b = null;
-  for (const r of extra.bank_balances) if (r.merchant_id === id && (!b || r.date > b.date || (r.date === b.date && r.id > b.id))) b = r;
-  return b;
+function lastBank(id){      // رصيد البنك = مجموع الحركات (إيداع + / سحب −)
+  let n = 0, t = 0;
+  for (const r of extra.bank_balances) if (r.merchant_id === id){ n++; t += Number(r.balance||0); }
+  return n ? {balance:t} : null;
 }
 $("seg").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
@@ -560,19 +565,30 @@ $("invs").addEventListener("click", async e => {
   }catch(err){ alert("مش قادر أحمّل الفاتورة — " + (err.message || "")); }
   b.disabled = false; b.textContent = old;
 });
+function bankParts(r){
+  let dep = Number(r.deposit||0), od = Number(r.order_amount||0), inc = Number(r.incentive||0);
+  if (!(dep || od || inc)){ const b = Number(r.balance||0); if (b >= 0) dep = b; else od = -b; }
+  return [dep, od, inc];
+}
 function renderBank(m){
   const rows = extra.bank_balances.filter(r => r.merchant_id === m.id).sort((x,y)=> x.date === y.date ? x.id - y.id : (x.date < y.date ? -1 : 1));
-  if (!rows.length){ $("banks").innerHTML = `<div class="empty">مفيش رصيد بنك متسجل للمحل ده</div>`; return; }
-  const last = rows[rows.length-1];
-  const hist = rows.map((r,i)=>({...r, ch: i ? Number(r.balance) - Number(rows[i-1].balance) : null})).reverse();
-  const diff = Number(last.balance) - Number(m.bal);
-  $("banks").innerHTML = `<div class="sum bsum" style="margin:0 0 10px">
-      <div style="background:var(--card)"><span>آخر رصيد بنك — بتاريخ <span class="num">${esc(last.date)}</span></span><b class="num" style="font-size:20px">${fmt(last.balance)}</b></div>
-      <div class="endbal"><span>الرصيد المتاح حاليًا (الحوافز)</span><b class="num" style="font-size:20px">${fmt(m.bal)}</b></div>
-      <div class="bdiff" style="background:var(--card)"><span>الفرق (البنك − المتاح)</span><b class="num ${diff<0?"minus":"plus"}">${fmt(diff)}</b></div>
-    </div>` +
-    hist.map(r=>`<div class="tx"><div><div class="d num">${esc(r.date)}</div>${r.notes?`<div class="n">${esc(r.notes)}</div>`:""}</div>
-      <div class="a"><b class="num">${fmt(r.balance)}</b>${r.ch==null?"":`<span class="num ${r.ch<0?"minus":"plus"}">${r.ch<0?"−":"+"}${fmt(Math.abs(r.ch))}</span>`}</div></div>`).join("");
+  if (!rows.length){ $("banks").innerHTML = `<div class="empty">مفيش حركات بنك متسجلة للمحل ده</div>`; return; }
+  let run = 0, D = 0, O = 0, I = 0;
+  const lines = rows.map(r => { const [dep, od, inc] = bankParts(r); run += dep + inc - od; D += dep; O += od; I += inc; return {...r, dep, od, inc, run}; });
+  const dash = '<span class="dash">—</span>', v = (x, c) => x ? `<td class="num ${c}">${fmt(x)}</td>` : `<td>${dash}</td>`;
+  $("banks").innerHTML = `<div class="sum" style="margin:0 0 10px">
+      <div style="background:var(--card)"><span>إجمالي الإيداع</span><b class="num plus">${fmt(D)}</b></div>
+      <div style="background:var(--card)"><span>إجمالي الأوردرات</span><b class="num minus">${fmt(O)}</b></div>
+      <div style="background:var(--card)"><span>اتسحب من الحافز</span><b class="num" style="color:#7030A0">${fmt(I)}</b></div>
+      <div class="endbal"><span>رصيد البنك</span><b class="num">${fmt(run)}</b></div>
+    </div>
+    <div class="stmt"><table>
+    <thead><tr><th>التاريخ</th><th>إيداع</th><th>الأوردر</th><th>من الحافز</th><th>الرصيد</th><th class="hn">ملاحظات</th></tr></thead><tbody>` +
+    lines.map(r=>`<tr><td class="num">${esc(r.date)}</td>${v(r.dep,"plus")}${v(r.od,"minus")}${v(r.inc,"")}
+      <td class="num"><b>${fmt(r.run)}</b></td><td class="n hn">${esc(r.notes||"")}</td></tr>`).join("") +
+    `<tr class="last"><td>الإجمالي</td><td class="num plus">${fmt(D)}</td><td class="num minus">${fmt(O)}</td><td class="num">${fmt(I)}</td>
+      <td class="num">${fmt(run)}</td><td class="hn"></td></tr></tbody></table></div>
+    <div class="n" style="margin-top:8px;color:var(--mute);font-size:12px">رصيد البنك = الإيداع + من الحافز − الأوردر.  و«من الحافز» بيتخصم من رصيد حوافز التاجر (بيظهر «مستخدم» في كشف الحساب).</div>`;
 }
 function showList(){ cur = null; extra = extra || {orders:[], bank_balances:[], invoices:[]}; $("vst").classList.add("hide"); $("vlist").classList.remove("hide"); renderList(); }
 function showSt(){ $("vlist").classList.add("hide"); $("vst").classList.remove("hide"); renderSt(); window.scrollTo(0,0); }
