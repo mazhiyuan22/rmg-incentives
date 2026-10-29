@@ -117,10 +117,14 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
 .stmt tr.edge td{background:#F2F4F7;font-weight:700}
 .stmt tr.last td{background:#E2EFDA;font-weight:800}
 .stmt .dash{color:#C0C6CF}
+.stmt tbody td:first-child{white-space:nowrap}
+@media (max-width:560px){.stmt tbody td:first-child{font-size:11.5px}}
 @media (max-width:560px){.stmt .hn{display:none}.stmt table{font-size:13px}.stmt td,.stmt th{padding:8px 4px}}
 .chip.b{background:#E2EFDA;color:var(--green)}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
-@media (min-width:600px){.seg{grid-template-columns:repeat(4,1fr)}}
+@media (min-width:600px){.seg{grid-template-columns:repeat(5,1fr)}}
+.seg button:last-child:nth-child(odd){grid-column:1/-1}
+@media (min-width:600px){.seg button:last-child:nth-child(odd){grid-column:auto}}
 .seg button{padding:9px 8px;border:1px solid #9DC3E6;background:#fff;color:var(--navy);border-radius:20px;cursor:pointer;white-space:nowrap;font-weight:600}
 .seg button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .seg .cnt{font-size:11px;opacity:.75;margin-inline-start:3px}
@@ -207,10 +211,11 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
         </div>
       </div>
       <div class="seg" id="seg">
-        <button data-p="st" class="on">كشف الحساب</button>
+        <button data-p="st" class="on">كشف الحوافز</button>
         <button data-p="ord">أوردرات ومرتجعات<span class="cnt" id="cO"></span></button>
         <button data-p="inv">الفواتير<span class="cnt" id="cI"></span></button>
         <button data-p="bank">البنك</button>
+        <button data-p="led">كشف حساب العميل</button>
       </div>
       <div class="qb" id="qbx">
         <button data-r="all" class="on">كل الفترات</button>
@@ -231,6 +236,7 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
       </div>
       <div id="pinv" class="hide"><div id="invs"></div></div>
       <div id="pbank" class="hide"><div id="banks"></div></div>
+      <div id="pled" class="hide"><div id="leds"></div></div>
     </div>
   </main>
 </section>
@@ -267,11 +273,12 @@ async function userEmail(u){
 const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 let tok = null, refreshTok = null, expAt = 0;
-let extra = {orders:[], bank_balances:[], invoices:[]}, xsig = null, pane = "st", okind = "";
+let extra = {orders:[], bank_balances:[], invoices:[], payments:[]}, xsig = null, pane = "st", okind = "";
 const EXTRA = {
   orders: "id,merchant_id,date,kind,doc_no,item_name,color,qty,price,amount,status,notes",
   bank_balances: "id,merchant_id,date,balance,notes,deposit,order_amount,incentive",
-  invoices: "id,merchant_id,file_path,file_name,invoice_no,pages,created_at"
+  invoices: "id,merchant_id,file_path,file_name,invoice_no,pages,created_at",
+  payments: "id,merchant_id,date,method,amount,ref,notes"
 };
 async function extraSig(){
   const out = [];
@@ -360,7 +367,7 @@ $("lform").addEventListener("submit", async ev => {
 function showLogin(msg){
   stopPoll();
   tok = refreshTok = null; data = null; sig = null; changed = new Set(); cur = null;
-  extra = {orders:[], bank_balances:[], invoices:[]}; xsig = null;
+  extra = {orders:[], bank_balances:[], invoices:[], payments:[]}; xsig = null;
   $("app").classList.add("hide"); $("login").classList.remove("hide");
   $("u").value = LS.get("rmg_user") || "";
   $("lerr").textContent = msg || "";
@@ -565,6 +572,47 @@ $("invs").addEventListener("click", async e => {
   }catch(err){ alert("مش قادر أحمّل الفاتورة — " + (err.message || "")); }
   b.disabled = false; b.textContent = old;
 });
+const PAYM = {cash:"كاش", bank:"بنك"};
+function renderLedger(m, a, b){
+  // كشف حساب العميل: الأوردرات مدين — المرتجعات والسداد دائن — الحوافز للعلم بس
+  const ev = [], grp = new Map();
+  for (const r of extra.orders) if (r.merchant_id === m.id){
+    const k = r.date + "|" + r.kind + "|" + (r.doc_no||"");
+    const g = grp.get(k) || {date:r.date, kind:r.kind, doc:r.doc_no||"", a:0, q:0}; g.a += Number(r.amount||0); g.q += Number(r.qty||0); grp.set(k, g);
+  }
+  for (const g of grp.values()) ev.push({d:g.date, o:g.kind==="order"?1:2, desc:(g.kind==="order"?"أوردر ":"مرتجع ")+g.doc,
+    dr:g.kind==="order"?g.a:0, cr:g.kind==="order"?0:g.a, inc:0, note:`${g.q.toLocaleString("en-US")} قطعة`});
+  for (const r of (extra.payments||[])) if (r.merchant_id === m.id)
+    ev.push({d:r.date, o:3, desc:`سداد ${PAYM[r.method]||r.method}${r.ref?" ("+r.ref+")":""}`, dr:0, cr:Number(r.amount||0), inc:0, note:r.notes||""});
+  for (const t of m.tx) if (t.type === "incentive" || t.type === "opening")
+    ev.push({d:t.date, o:4, desc:t.type==="incentive"?"حوافز مضافة":"بواقي حوافز", dr:0, cr:0, inc:t.amount, note:""});
+  ev.sort((x,y)=> x.d === y.d ? x.o - y.o : (x.d < y.d ? -1 : 1));
+  let op = 0, run = 0, D = 0, C = 0, I = 0, P = 0, R = 0; const rows = [];
+  for (const e of ev){
+    if (e.d < a){ op += e.dr - e.cr; continue; }
+    if (e.d > b) continue;
+    if (!rows.length) run = op;
+    run += e.dr - e.cr; D += e.dr; C += e.cr; I += e.inc; if (e.o === 3) P += e.cr; if (e.o === 2) R += e.cr;
+    rows.push({...e, bal:run});
+  }
+  const end = rows.length ? rows[rows.length-1].bal : op;
+  const dash = '<span class="dash">—</span>', v = (x, c) => x ? `<td class="num ${c}">${fmt(x)}</td>` : `<td>${dash}</td>`;
+  $("leds").innerHTML = `<div class="sum" style="margin:0 0 10px">
+      <div style="background:var(--card)"><span>أوردرات</span><b class="num minus">${fmt(D)}</b></div>
+      <div style="background:var(--card)"><span>سداد + مرتجعات</span><b class="num plus">${fmt(C)}</b></div>
+      <div style="background:var(--card)"><span>حوافز اتضافت (للعلم)</span><b class="num" style="color:#7030A0">${fmt(I)}</b></div>
+      <div class="endbal"><span>الرصيد على التاجر</span><b class="num">${fmt(end)}</b></div>
+    </div>
+    <div class="stmt"><table>
+    <thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th><th class="hn">حوافز (للعلم)</th></tr></thead><tbody>
+    <tr class="edge"><td colspan="4">رصيد أول الفترة</td><td class="num">${fmt(op)}</td><td class="hn"></td></tr>` +
+    rows.map(r=>`<tr><td class="num">${esc(r.d)}</td><td class="k" style="white-space:normal">${esc(r.desc)}</td>${v(r.dr,"minus")}${v(r.cr,"plus")}
+      <td class="num"><b>${fmt(r.bal)}</b></td><td class="num hn" style="color:#7030A0">${r.inc?fmt(r.inc):""}</td></tr>`).join("") +
+    (rows.length ? "" : `<tr><td colspan="6" class="n" style="text-align:center;padding:16px">مفيش حركات في الفترة دي</td></tr>`) +
+    `<tr class="last"><td colspan="2">الرصيد على التاجر</td><td class="num minus">${fmt(D)}</td><td class="num plus">${fmt(C)}</td>
+      <td class="num">${fmt(end)}</td><td class="num hn">${fmt(I)}</td></tr></tbody></table></div>
+    <div class="n" style="margin-top:8px;color:var(--mute);font-size:12px">مدين = أوردرات · دائن = سداد (كاش/بنك) ومرتجعات · الرصيد الموجب = فلوس على التاجر · السداد: ${fmt(P)} · المرتجعات: ${fmt(R)}</div>`;
+}
 function bankParts(r){
   let dep = Number(r.deposit||0), od = Number(r.order_amount||0), inc = Number(r.incentive||0);
   if (!(dep || od || inc)){ const b = Number(r.balance||0); if (b >= 0) dep = b; else od = -b; }
@@ -590,7 +638,7 @@ function renderBank(m){
       <td class="num">${fmt(run)}</td><td class="hn"></td></tr></tbody></table></div>
     <div class="n" style="margin-top:8px;color:var(--mute);font-size:12px">رصيد البنك = الإيداع + من الحافز − الأوردر.  و«من الحافز» بيتخصم من رصيد حوافز التاجر (بيظهر «مستخدم» في كشف الحساب).</div>`;
 }
-function showList(){ cur = null; extra = extra || {orders:[], bank_balances:[], invoices:[]}; $("vst").classList.add("hide"); $("vlist").classList.remove("hide"); renderList(); }
+function showList(){ cur = null; extra = extra || {orders:[], bank_balances:[], invoices:[], payments:[]}; $("vst").classList.add("hide"); $("vlist").classList.remove("hide"); renderList(); }
 function showSt(){ $("vlist").classList.add("hide"); $("vst").classList.remove("hide"); renderSt(); window.scrollTo(0,0); }
 $("bk").onclick = showList;
 window.addEventListener("popstate", ()=>{ if (cur != null) showList(); });
@@ -626,9 +674,11 @@ function renderSt(){
   $("pord").classList.toggle("hide", pane !== "ord");
   $("pinv").classList.toggle("hide", pane !== "inv");
   $("pbank").classList.toggle("hide", pane !== "bank");
+  $("pled").classList.toggle("hide", pane !== "led");
   if (pane === "ord") return renderOrders(m, a, b);
   if (pane === "inv") return renderInv(m);
   if (pane === "bank") return renderBank(m);
+  if (pane === "led") return renderLedger(m, a, b);
   let before = 0, add = 0, used = 0; const rows = [];
   for (const t of m.tx){
     if (t.date < a) before = t.balance;
