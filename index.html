@@ -574,7 +574,7 @@ $("invs").addEventListener("click", async e => {
 });
 const PAYM = {cash:"كاش", bank:"بنك"};
 function renderLedger(m, a, b){
-  // كشف حساب العميل: الأوردرات مدين — المرتجعات والسداد دائن — الحوافز للعلم بس
+  // كشف حساب العميل: الأوردرات مدين — المرتجعات والسداد والحوافز دائن
   const ev = [], grp = new Map();
   for (const r of extra.orders) if (r.merchant_id === m.id){
     const k = r.date + "|" + r.kind + "|" + (r.doc_no||"");
@@ -585,7 +585,7 @@ function renderLedger(m, a, b){
   for (const r of (extra.payments||[])) if (r.merchant_id === m.id)
     ev.push({d:r.date, o:3, desc:`سداد ${PAYM[r.method]||r.method}${r.ref?" ("+r.ref+")":""}`, dr:0, cr:Number(r.amount||0), inc:0, note:r.notes||""});
   for (const t of m.tx) if (t.type === "incentive" || t.type === "opening")
-    ev.push({d:t.date, o:4, desc:t.type==="incentive"?"حوافز مضافة":"بواقي حوافز", dr:0, cr:0, inc:t.amount, note:""});
+    ev.push({d:t.date, o:4, desc:t.type==="incentive"?"حوافز مضافة":"بواقي حوافز", dr:0, cr:t.amount, inc:t.amount, note:""});
   ev.sort((x,y)=> x.d === y.d ? x.o - y.o : (x.d < y.d ? -1 : 1));
   let op = 0, run = 0, D = 0, C = 0, I = 0, P = 0, R = 0; const rows = [];
   for (const e of ev){
@@ -599,19 +599,19 @@ function renderLedger(m, a, b){
   const dash = '<span class="dash">—</span>', v = (x, c) => x ? `<td class="num ${c}">${fmt(x)}</td>` : `<td>${dash}</td>`;
   $("leds").innerHTML = `<div class="sum" style="margin:0 0 10px">
       <div style="background:var(--card)"><span>أوردرات</span><b class="num minus">${fmt(D)}</b></div>
-      <div style="background:var(--card)"><span>سداد + مرتجعات</span><b class="num plus">${fmt(C)}</b></div>
-      <div style="background:var(--card)"><span>حوافز اتضافت (للعلم)</span><b class="num" style="color:#7030A0">${fmt(I)}</b></div>
+      <div style="background:var(--card)"><span>سداد + مرتجعات</span><b class="num plus">${fmt(P + R)}</b></div>
+      <div style="background:var(--card)"><span>حوافز</span><b class="num" style="color:#7030A0">${fmt(I)}</b></div>
       <div class="endbal"><span>الرصيد على التاجر</span><b class="num">${fmt(end)}</b></div>
     </div>
     <div class="stmt"><table>
-    <thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th><th class="hn">حوافز (للعلم)</th></tr></thead><tbody>
-    <tr class="edge"><td colspan="4">رصيد أول الفترة</td><td class="num">${fmt(op)}</td><td class="hn"></td></tr>` +
-    rows.map(r=>`<tr><td class="num">${esc(r.d)}</td><td class="k" style="white-space:normal">${esc(r.desc)}</td>${v(r.dr,"minus")}${v(r.cr,"plus")}
-      <td class="num"><b>${fmt(r.bal)}</b></td><td class="num hn" style="color:#7030A0">${r.inc?fmt(r.inc):""}</td></tr>`).join("") +
-    (rows.length ? "" : `<tr><td colspan="6" class="n" style="text-align:center;padding:16px">مفيش حركات في الفترة دي</td></tr>`) +
+    <thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>
+    <tr class="edge"><td colspan="4">رصيد أول الفترة</td><td class="num">${fmt(op)}</td></tr>` +
+    rows.map(r=>`<tr><td class="num">${esc(r.d)}</td><td class="k" style="white-space:normal">${esc(r.desc)}</td>${v(r.dr,"minus")}${r.inc?`<td class="num" style="color:#7030A0">${fmt(r.cr)}</td>`:v(r.cr,"plus")}
+      <td class="num"><b>${fmt(r.bal)}</b></td></tr>`).join("") +
+    (rows.length ? "" : `<tr><td colspan="5" class="n" style="text-align:center;padding:16px">مفيش حركات في الفترة دي</td></tr>`) +
     `<tr class="last"><td colspan="2">الرصيد على التاجر</td><td class="num minus">${fmt(D)}</td><td class="num plus">${fmt(C)}</td>
-      <td class="num">${fmt(end)}</td><td class="num hn">${fmt(I)}</td></tr></tbody></table></div>
-    <div class="n" style="margin-top:8px;color:var(--mute);font-size:12px">مدين = أوردرات · دائن = سداد (كاش/بنك) ومرتجعات · الرصيد الموجب = فلوس على التاجر · السداد: ${fmt(P)} · المرتجعات: ${fmt(R)}</div>`;
+      <td class="num">${fmt(end)}</td></tr></tbody></table></div>
+    <div class="n" style="margin-top:8px;color:var(--mute);font-size:12px">مدين = أوردرات · دائن = سداد (كاش/بنك) + مرتجعات + حوافز · الرصيد الموجب = فلوس على التاجر · السداد: ${fmt(P)} · المرتجعات: ${fmt(R)} · الحوافز: ${fmt(I)}</div>`;
 }
 function bankParts(r){
   let dep = Number(r.deposit||0), od = Number(r.order_amount||0), inc = Number(r.incentive||0);
