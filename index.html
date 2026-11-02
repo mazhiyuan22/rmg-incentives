@@ -121,8 +121,13 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
 @media (max-width:560px){.stmt tbody td:first-child{font-size:11.5px}}
 @media (max-width:560px){.stmt .hn{display:none}.stmt table{font-size:13px}.stmt td,.stmt th{padding:8px 4px}}
 .chip.b{background:#E2EFDA;color:var(--green)}
+.pick{display:block;border:2px dashed #9DC3E6;border-radius:12px;padding:16px;text-align:center;color:var(--navy);font-weight:700;cursor:pointer;background:#F8FBFF;margin:0}
+.pick.has{border-style:solid;background:#E2EFDA;color:var(--green)}
+.inv .ic.img{background:#DDEBF7;color:var(--navy)}
+.inv .del{border:0;background:#fff;color:var(--red);border:1px solid #F4B4B4;border-radius:10px;padding:9px 10px;cursor:pointer}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
-@media (min-width:600px){.seg{grid-template-columns:repeat(5,1fr)}}
+@media (min-width:600px){.seg{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:860px){.seg{grid-template-columns:repeat(6,1fr)}}
 .seg button:last-child:nth-child(odd){grid-column:1/-1}
 @media (min-width:600px){.seg button:last-child:nth-child(odd){grid-column:auto}}
 .seg button{padding:9px 8px;border:1px solid #9DC3E6;background:#fff;color:var(--navy);border-radius:20px;cursor:pointer;white-space:nowrap;font-weight:600}
@@ -216,6 +221,7 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
         <button data-p="inv">الفواتير<span class="cnt" id="cI"></span></button>
         <button data-p="bank">البنك</button>
         <button data-p="led">كشف حساب العميل</button>
+        <button data-p="doc">📎 إقرار / إخطار<span class="cnt" id="cD"></span></button>
       </div>
       <div class="qb" id="qbx">
         <button data-r="all" class="on">كل الفترات</button>
@@ -237,6 +243,20 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
       <div id="pinv" class="hide"><div id="invs"></div></div>
       <div id="pbank" class="hide"><div id="banks"></div></div>
       <div id="pled" class="hide"><div id="leds"></div></div>
+      <div id="pdoc" class="hide">
+        <div class="shead" style="margin-bottom:10px">
+          <div class="k" style="font-weight:800;color:var(--navy);margin-bottom:8px">رفع مستند للتاجر</div>
+          <div class="qb" id="dtype" style="margin-bottom:8px">
+            <button data-t="iqrar" class="on">إقرار</button><button data-t="ikhtar">إخطار</button>
+          </div>
+          <label class="pick" for="dfile"><span id="dfname">📷 صوّر أو اختار صورة / PDF</span></label>
+          <input id="dfile" type="file" accept="image/*,application/pdf" class="hide">
+          <input id="dnote" type="text" placeholder="ملاحظة (اختياري)" style="margin-top:8px">
+          <button class="btn" id="dup" style="margin-top:10px">⬆ رفع</button>
+          <div class="err" id="dmsg" style="min-height:0"></div>
+        </div>
+        <div id="docs"></div>
+      </div>
     </div>
   </main>
 </section>
@@ -273,12 +293,13 @@ async function userEmail(u){
 const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 let tok = null, refreshTok = null, expAt = 0;
-let extra = {orders:[], bank_balances:[], invoices:[], payments:[]}, xsig = null, pane = "st", okind = "";
+let extra = {orders:[], bank_balances:[], invoices:[], payments:[], merchant_docs:[]}, xsig = null, pane = "st", okind = "";
 const EXTRA = {
   orders: "id,merchant_id,date,kind,doc_no,item_name,color,qty,price,amount,status,notes",
   bank_balances: "id,merchant_id,date,balance,notes,deposit,order_amount,incentive",
   invoices: "id,merchant_id,file_path,file_name,invoice_no,pages,created_at",
-  payments: "id,merchant_id,date,method,amount,ref,notes"
+  payments: "id,merchant_id,date,method,amount,ref,notes",
+  merchant_docs: "id,merchant_id,doc_type,file_path,file_name,mime,size_kb,notes,created_at,created_by"
 };
 async function extraSig(){
   const out = [];
@@ -367,7 +388,7 @@ $("lform").addEventListener("submit", async ev => {
 function showLogin(msg){
   stopPoll();
   tok = refreshTok = null; data = null; sig = null; changed = new Set(); cur = null;
-  extra = {orders:[], bank_balances:[], invoices:[], payments:[]}; xsig = null;
+  extra = {orders:[], bank_balances:[], invoices:[], payments:[], merchant_docs:[]}; xsig = null;
   $("app").classList.add("hide"); $("login").classList.remove("hide");
   $("u").value = LS.get("rmg_user") || "";
   $("lerr").textContent = msg || "";
@@ -555,6 +576,96 @@ function renderInv(m){
       <button class="dl" data-id="${r.id}">⬇ تحميل</button>
     </div>`).join("") : `<div class="empty">مفيش فواتير متسجلة للمحل ده</div>`;
 }
+/* ---------------- الإقرار / الإخطار ---------------- */
+const DOCT = {iqrar:"إقرار", ikhtar:"إخطار"};
+let dtype = "iqrar";
+$("dtype").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  dtype = b.dataset.t; document.querySelectorAll("#dtype button").forEach(x=>x.classList.toggle("on", x===b));
+});
+$("dfile").addEventListener("change", () => {
+  const f = $("dfile").files[0];
+  $("dfname").textContent = f ? `✔ ${f.name}` : "📷 صوّر أو اختار صورة / PDF";
+  document.querySelector(".pick").classList.toggle("has", !!f); $("dmsg").textContent = "";
+});
+function shrinkImage(file){        // صور الموبايل كبيرة — نصغّرها قبل الرفع
+  return new Promise(res => {
+    if (!/^image\/(jpeg|png|webp)$/i.test(file.type) || file.size < 1.2e6) return res(file);
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, 2200 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(b => { URL.revokeObjectURL(url); res(b && b.size < file.size ? new File([b], file.name.replace(/\.\w+$/, "") + ".jpg", {type:"image/jpeg"}) : file); }, "image/jpeg", 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); res(file); };
+    img.src = url;
+  });
+}
+$("dup").onclick = async () => {
+  const m = data && data.ms.find(x=>x.id===cur); if (!m) return;
+  let f = $("dfile").files[0];
+  if (!f){ $("dmsg").textContent = "اختار الصورة أو الملف الأول"; return; }
+  const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+  if (!isPdf && !/^image\//.test(f.type)){ $("dmsg").textContent = "صورة أو PDF بس"; return; }
+  $("dup").disabled = true; $("dmsg").style.color = "var(--navy)"; $("dmsg").textContent = "⏳ جاري الرفع…";
+  try{
+    if (!isPdf) f = await shrinkImage(f);
+    if (f.size > 10*1024*1024) throw new Error("الملف أكبر من 10 ميجا");
+    const ext = isPdf ? "pdf" : ((f.type.split("/")[1] || "jpg").replace("jpeg","jpg"));
+    const path = `${m.id}/${dtype}-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+    await ensure();
+    const r = await fetch(SB_URL + "/storage/v1/object/docs/" + path, {method:"POST",
+      headers:{apikey:SB_KEY, Authorization:"Bearer " + tok, "Content-Type": isPdf ? "application/pdf" : f.type}, body:f});
+    if (!r.ok){ const t = await r.text(); throw new Error(r.status === 403 || /security/i.test(t) ? "مش مسموح ترفع للمحل ده" : ("HTTP " + r.status)); }
+    await api("/rest/v1/merchant_docs", {method:"POST", headers:{Prefer:"return=minimal"},
+      body:{merchant_id:m.id, doc_type:dtype, file_path:path, file_name:`${DOCT[dtype]} - ${m.name}.${ext}`,
+            mime: isPdf ? "application/pdf" : f.type, size_kb: Math.round(f.size/1024), notes:$("dnote").value.trim()}});
+    $("dfile").value = ""; $("dnote").value = ""; $("dfname").textContent = "📷 صوّر أو اختار صورة / PDF";
+    document.querySelector(".pick").classList.remove("has");
+    $("dmsg").style.color = "var(--green)"; $("dmsg").textContent = `✔ اترفع ${DOCT[dtype]}`;
+    extra = await fetchExtra(); xsig = null; renderSt();
+  }catch(err){ $("dmsg").style.color = "var(--red)"; $("dmsg").textContent = "ماترفعش — " + (err.net ? "مفيش نت" : err.message); }
+  $("dup").disabled = false;
+};
+function renderDocs(m){
+  const rows = (extra.merchant_docs||[]).filter(r => r.merchant_id === m.id).sort((x,y)=>y.id-x.id);
+  $("docs").innerHTML = rows.length ? rows.map(r=>`
+    <div class="inv">
+      <div class="ic ${(r.mime||"").startsWith("image")?"img":""}">${(r.mime||"").startsWith("image")?"صورة":"PDF"}</div>
+      <div class="tt"><b>${DOCT[r.doc_type]||r.doc_type}</b><span>${esc(String(r.created_at||"").slice(0,10))}${r.notes?" • "+esc(r.notes):""}</span></div>
+      <button class="dl" data-doc="${r.id}">⬇ فتح</button>
+      <button class="del" data-del="${r.id}" title="مسح">🗑</button>
+    </div>`).join("") : `<div class="empty">مفيش إقرارات أو إخطارات متسجلة للمحل ده</div>`;
+}
+$("docs").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.del){
+    if (!confirm("مسح المستند ده؟")) return;
+    try{
+      await ensure();
+      const j = await api(`/rest/v1/merchant_docs?id=eq.${b.dataset.del}`, {method:"PATCH", headers:{Prefer:"return=representation"}, body:{deleted_at:new Date().toISOString()}});
+      if (!j || !j.length) throw new Error("بتمسح اللي رفعته انت بس");
+      extra = await fetchExtra(); xsig = null; renderSt();
+    }catch(err){ alert("ماتمسحش — " + err.message); }
+    return;
+  }
+  const r = (extra.merchant_docs||[]).find(x => x.id === +b.dataset.doc); if (!r) return;
+  b.disabled = true; const old = b.textContent; b.textContent = "…";
+  try{
+    await ensure();
+    const res = await fetch(SB_URL + "/storage/v1/object/authenticated/docs/" + r.file_path.split("/").map(encodeURIComponent).join("/"),
+                            {headers:{apikey:SB_KEY, Authorization:"Bearer " + tok}});
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const blob = new Blob([await res.blob()], {type: r.mime || "application/octet-stream"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = r.file_name || "document";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }catch(err){ alert("مش قادر أفتح المستند — " + (err.message || "")); }
+  b.disabled = false; b.textContent = old;
+});
+
 $("invs").addEventListener("click", async e => {
   const b = e.target.closest(".dl"); if (!b) return;
   const r = extra.invoices.find(x => x.id === +b.dataset.id); if (!r) return;
@@ -638,7 +749,7 @@ function renderBank(m){
       <td class="num">${fmt(run)}</td><td class="hn"></td></tr></tbody></table></div>
     <div class="n" style="margin-top:8px;color:var(--mute);font-size:12px">رصيد البنك = الإيداع + من الحافز − الأوردر.  و«من الحافز» بيتخصم من رصيد حوافز التاجر (بيظهر «مستخدم» في كشف الحساب).</div>`;
 }
-function showList(){ cur = null; extra = extra || {orders:[], bank_balances:[], invoices:[], payments:[]}; $("vst").classList.add("hide"); $("vlist").classList.remove("hide"); renderList(); }
+function showList(){ cur = null; extra = extra || {orders:[], bank_balances:[], invoices:[], payments:[], merchant_docs:[]}; $("vst").classList.add("hide"); $("vlist").classList.remove("hide"); renderList(); }
 function showSt(){ $("vlist").classList.add("hide"); $("vst").classList.remove("hide"); renderSt(); window.scrollTo(0,0); }
 $("bk").onclick = showList;
 window.addEventListener("popstate", ()=>{ if (cur != null) showList(); });
@@ -667,18 +778,21 @@ function renderSt(){
   $("cO").textContent = (()=>{const n = new Set(extra.orders.filter(r=>r.merchant_id===m.id).map(r=>r.kind+(r.doc_no||r.id))).size; return n ? `(${n})` : "";})();
   $("cI").textContent = (()=>{const n = extra.invoices.filter(r=>r.merchant_id===m.id).length; return n ? `(${n})` : "";})();
   const [a,b] = bounds();
-  $("qbx").classList.toggle("hide", pane === "inv" || pane === "bank");
-  $("rng").classList.toggle("hide", range !== "custom" || pane === "inv" || pane === "bank");
+  $("qbx").classList.toggle("hide", pane === "inv" || pane === "bank" || pane === "doc");
+  $("rng").classList.toggle("hide", range !== "custom" || pane === "inv" || pane === "bank" || pane === "doc");
   document.querySelector(".shead .sum").classList.toggle("hide", pane !== "st");
   $("txs").classList.toggle("hide", pane !== "st");
   $("pord").classList.toggle("hide", pane !== "ord");
   $("pinv").classList.toggle("hide", pane !== "inv");
   $("pbank").classList.toggle("hide", pane !== "bank");
   $("pled").classList.toggle("hide", pane !== "led");
+  $("pdoc").classList.toggle("hide", pane !== "doc");
+  $("cD").textContent = (()=>{const n = (extra.merchant_docs||[]).filter(r=>r.merchant_id===m.id).length; return n ? `(${n})` : "";})();
   if (pane === "ord") return renderOrders(m, a, b);
   if (pane === "inv") return renderInv(m);
   if (pane === "bank") return renderBank(m);
   if (pane === "led") return renderLedger(m, a, b);
+  if (pane === "doc") return renderDocs(m);
   let before = 0, add = 0, used = 0; const rows = [];
   for (const t of m.tx){
     if (t.date < a) before = t.balance;
