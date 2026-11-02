@@ -697,39 +697,41 @@ function renderLedger(m, a, b){
     ev.push({d:r.date, o:3, desc:`سداد ${PAYM[r.method]||r.method}${r.ref?" ("+r.ref+")":""}`, dr:0, cr:Number(r.amount||0), inc:0, note:r.notes||""});
   for (const t of m.tx) if (t.type === "incentive" || t.type === "opening")
     ev.push({d:t.date, o:4, desc:t.type==="incentive"?"حوافز مضافة":"بواقي حوافز", dr:0, cr:t.amount, inc:t.amount, note:""});
-  // «باقي البنك»: آخر باقي متسجل للتاجر في تاب البنك = رصيد افتتاحي، والكشف بيبدأ منه ويكمّل عليه
-  let anchor = null;
+  // «باقي البنك»: في آخر يومه الرصيد = الباقي ← سطر «تسوية» بالفرق (كل الحركات بتظهر)
+  const anchors = new Map();
   for (const r of extra.bank_balances.filter(x=>x.merchant_id===m.id).sort((x,y)=> x.date===y.date ? x.id-y.id : (x.date<y.date?-1:1))){
-    const [dep, od, inc] = bankParts(r); if (dep > 0 && !od && !inc && r.date <= b) anchor = {d:r.date, a:dep};   // آخر باقي بنك لحد آخر الفترة
+    const [dep, od, inc] = bankParts(r); if (dep > 0 && !od && !inc) anchors.set(r.date, dep);
   }
-  let evs = ev;
-  if (anchor){ evs = ev.filter(e => e.d > anchor.d); evs.push({d:anchor.d, o:0, desc:"باقي بنك (رصيد افتتاحي)", dr:0, cr:anchor.a, inc:0, note:""}); }
+  const evs = ev.concat([...anchors].map(([d, a]) => ({d, o:9, desc:"باقي بنك", dr:0, cr:a, inc:0, note:""})));
   evs.sort((x,y)=> x.d === y.d ? x.o - y.o : (x.d < y.d ? -1 : 1));
-  let op = 0, run = 0, D = 0, C = 0, I = 0, P = 0, R = 0; const rows = [];
-  for (const e of evs){
-    if (e.d < a){ op += e.cr - e.dr; continue; }
+  let op = 0, run = 0, D = 0, C = 0, I = 0, P = 0, R = 0, ADJ = 0; const rows = [];
+  for (let e of evs){
     if (e.d > b) continue;
-    if (!rows.length) run = op;
-    run += e.cr - e.dr; D += e.dr; C += e.cr; I += e.inc; if (e.o === 3) P += e.cr; if (e.o === 2) R += e.cr;
+    if (e.o === 9){
+      const diff = Math.round((e.cr - run) * 100) / 100, amt = e.cr;
+      e = {...e, desc: Math.abs(diff) >= 0.005 ? `تسوية على باقي البنك (${fmt(amt)})` : "مطابق لباقي البنك", dr: diff < 0 ? -diff : 0, cr: diff > 0 ? diff : 0, adj:true};
+    }
+    if (e.d < a){ run += e.cr - e.dr; op = run; continue; }
+    run += e.cr - e.dr; D += e.dr; C += e.cr; I += e.inc; if (e.o === 3) P += e.cr; if (e.o === 2) R += e.cr; if (e.adj) ADJ += e.cr - e.dr;
     rows.push({...e, bal:run});
   }
   const end = rows.length ? rows[rows.length-1].bal : op;
   const dash = '<span class="dash">—</span>', v = (x, c) => x ? `<td class="num ${c}">${fmt(x)}</td>` : `<td>${dash}</td>`;
   $("leds").innerHTML = `<div class="sum" style="margin:0 0 10px">
       <div style="background:var(--card)"><span>أوردرات</span><b class="num minus">${fmt(D)}</b></div>
-      <div style="background:var(--card)"><span>سداد + مرتجعات${anchor?" + باقي بنك":""}</span><b class="num plus">${fmt(C - I)}</b></div>
+      <div style="background:var(--card)"><span>سداد + مرتجعات</span><b class="num plus">${fmt(P + R)}</b></div>
       <div style="background:var(--card)"><span>حوافز</span><b class="num" style="color:#7030A0">${fmt(I)}</b></div>
       <div class="endbal" ${end<0?'style="background:var(--redbg)"':''}><span>رصيد التاجر — ${end>=0?"له":"عليه"}</span><b class="num" ${end<0?'style="color:var(--red)"':''}>${fmt(Math.abs(end))}</b></div>
     </div>
     <div class="stmt"><table>
     <thead><tr><th>التاريخ</th><th>البيان</th><th>عليه</th><th>له</th><th>الرصيد</th></tr></thead><tbody>
     <tr class="edge"><td colspan="4">رصيد أول الفترة</td><td class="num">${fmt(op)}</td></tr>` +
-    rows.map(r=>`<tr><td class="num">${esc(r.d)}</td><td class="k" style="white-space:normal">${esc(r.desc)}</td>${v(r.dr,"minus")}${r.inc?`<td class="num" style="color:#7030A0">${fmt(r.cr)}</td>`:v(r.cr,"plus")}
+    rows.map(r=>`<tr ${r.adj?'style="background:#FFF2CC"':''}><td class="num">${esc(r.d)}</td><td class="k" style="white-space:normal">${esc(r.desc)}</td>${v(r.dr,"minus")}${r.inc?`<td class="num" style="color:#7030A0">${fmt(r.cr)}</td>`:v(r.cr,"plus")}
       <td class="num"><b ${r.bal<0?'style="color:var(--red)"':''}>${fmt(r.bal)}</b></td></tr>`).join("") +
     (rows.length ? "" : `<tr><td colspan="5" class="n" style="text-align:center;padding:16px">مفيش حركات في الفترة دي</td></tr>`) +
     `<tr class="last"><td colspan="2">رصيد التاجر (${end>=0?"له":"عليه"})</td><td class="num minus">${fmt(D)}</td><td class="num plus">${fmt(C)}</td>
       <td class="num">${fmt(end)}</td></tr></tbody></table></div>
-    <div class="n" style="margin-top:8px;color:var(--mute);font-size:12px">عليه = أوردرات · له = سداد (كاش/بنك) + مرتجعات + حوافز${anchor?` · الكشف بادئ من باقي البنك ${fmt(anchor.a)} يوم ${esc(anchor.d)}`:""} · الرصيد الموجب = للتاجر · السداد: ${fmt(P)} · المرتجعات: ${fmt(R)} · الحوافز: ${fmt(I)}</div>`;
+    <div class="n" style="margin-top:8px;color:var(--mute);font-size:12px">عليه = أوردرات · له = سداد (كاش/بنك) + مرتجعات + حوافز${Math.abs(ADJ)>=0.005?` · تسويات على باقي البنك: ${fmt(ADJ)}`:""} · الرصيد الموجب = للتاجر · السداد: ${fmt(P)} · المرتجعات: ${fmt(R)} · الحوافز: ${fmt(I)}</div>`;
 }
 function bankParts(r){
   let dep = Number(r.deposit||0), od = Number(r.order_amount||0), inc = Number(r.incentive||0);
