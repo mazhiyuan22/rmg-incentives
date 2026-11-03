@@ -127,7 +127,7 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
 .inv .del{border:0;background:#fff;color:var(--red);border:1px solid #F4B4B4;border-radius:10px;padding:9px 10px;cursor:pointer}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
 @media (min-width:600px){.seg{grid-template-columns:repeat(3,1fr)}}
-@media (min-width:860px){.seg{grid-template-columns:repeat(6,1fr)}}
+@media (min-width:860px){.seg{grid-template-columns:repeat(5,1fr)}}
 .seg button:last-child:nth-child(odd){grid-column:1/-1}
 @media (min-width:600px){.seg button:last-child:nth-child(odd){grid-column:auto}}
 .seg button{padding:9px 8px;border:1px solid #9DC3E6;background:#fff;color:var(--navy);border-radius:20px;cursor:pointer;white-space:nowrap;font-weight:600}
@@ -216,11 +216,10 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
         </div>
       </div>
       <div class="seg" id="seg">
-        <button data-p="st" class="on">كشف الحوافز</button>
+        <button data-p="st" class="on">كشف الحساب</button>
         <button data-p="ord">أوردرات ومرتجعات<span class="cnt" id="cO"></span></button>
         <button data-p="inv">الفواتير<span class="cnt" id="cI"></span></button>
         <button data-p="bank">البنك</button>
-        <button data-p="led">كشف حساب العميل</button>
         <button data-p="doc">📎 إقرار / إخطار<span class="cnt" id="cD"></span></button>
       </div>
       <div class="qb" id="qbx">
@@ -242,7 +241,6 @@ main{padding:12px 16px 40px;max-width:900px;margin:0 auto}
       </div>
       <div id="pinv" class="hide"><div id="invs"></div></div>
       <div id="pbank" class="hide"><div id="banks"></div></div>
-      <div id="pled" class="hide"><div id="leds"></div></div>
       <div id="pdoc" class="hide">
         <div class="shead" style="margin-bottom:10px">
           <div class="k" style="font-weight:800;color:var(--navy);margin-bottom:8px">رفع مستند للتاجر</div>
@@ -293,12 +291,11 @@ async function userEmail(u){
 const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 let tok = null, refreshTok = null, expAt = 0;
-let extra = {orders:[], bank_balances:[], invoices:[], payments:[], merchant_docs:[]}, xsig = null, pane = "st", okind = "";
+let extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[]}, xsig = null, pane = "st", okind = "";
 const EXTRA = {
   orders: "id,merchant_id,date,kind,doc_no,item_name,color,qty,price,amount,status,notes",
   bank_balances: "id,merchant_id,date,balance,notes,deposit,order_amount,incentive",
   invoices: "id,merchant_id,file_path,file_name,invoice_no,pages,created_at",
-  payments: "id,merchant_id,date,method,amount,ref,notes",
   merchant_docs: "id,merchant_id,doc_type,file_path,file_name,mime,size_kb,notes,created_at,created_by"
 };
 async function extraSig(){
@@ -388,7 +385,7 @@ $("lform").addEventListener("submit", async ev => {
 function showLogin(msg){
   stopPoll();
   tok = refreshTok = null; data = null; sig = null; changed = new Set(); cur = null;
-  extra = {orders:[], bank_balances:[], invoices:[], payments:[], merchant_docs:[]}; xsig = null;
+  extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[]}; xsig = null;
   $("app").classList.add("hide"); $("login").classList.remove("hide");
   $("u").value = LS.get("rmg_user") || "";
   $("lerr").textContent = msg || "";
@@ -683,54 +680,6 @@ $("invs").addEventListener("click", async e => {
   }catch(err){ alert("مش قادر أحمّل الفاتورة — " + (err.message || "")); }
   b.disabled = false; b.textContent = old;
 });
-const PAYM = {cash:"كاش", bank:"بنك"};
-function renderLedger(m, a, b){
-  // كشف حساب العميل: الأوردرات = عليه — المرتجعات والسداد والحوافز = له — الرصيد الموجب = للتاجر
-  const ev = [], grp = new Map();
-  for (const r of extra.orders) if (r.merchant_id === m.id){
-    const k = r.date + "|" + r.kind + "|" + (r.doc_no||"");
-    const g = grp.get(k) || {date:r.date, kind:r.kind, doc:r.doc_no||"", a:0, q:0}; g.a += Number(r.amount||0); g.q += Number(r.qty||0); grp.set(k, g);
-  }
-  for (const g of grp.values()) ev.push({d:g.date, o:g.kind==="order"?1:2, desc:(g.kind==="order"?"أوردر ":"مرتجع ")+g.doc,
-    dr:g.kind==="order"?g.a:0, cr:g.kind==="order"?0:g.a, inc:0, note:`${g.q.toLocaleString("en-US")} قطعة`});
-  for (const r of (extra.payments||[])) if (r.merchant_id === m.id)
-    ev.push({d:r.date, o:3, desc:`سداد ${PAYM[r.method]||r.method}${r.ref?" ("+r.ref+")":""}`, dr:0, cr:Number(r.amount||0), inc:0, note:r.notes||""});
-  for (const t of m.tx) if (t.type === "incentive" || t.type === "opening")
-    ev.push({d:t.date, o:4, desc:t.type==="incentive"?"حوافز مضافة":"بواقي حوافز", dr:0, cr:t.amount, inc:t.amount, note:""});
-  // «باقي البنك»: آخر باقي متسجل للتاجر (لحد آخر الفترة) = رصيده في أول الكشف، والكشف بيكمّل عليه
-  let anchor = null;
-  for (const r of extra.bank_balances.filter(x=>x.merchant_id===m.id).sort((x,y)=> x.date===y.date ? x.id-y.id : (x.date<y.date?-1:1))){
-    const [dep, od, inc] = bankParts(r); if (dep > 0 && !od && !inc && r.date <= b) anchor = {d:r.date, a:dep};
-  }
-  let evs = ev;
-  if (anchor){ evs = ev.filter(e => e.d > anchor.d); evs.push({d:anchor.d, o:0, desc:"باقي بنك (رصيد التاجر)", dr:0, cr:anchor.a, inc:0, note:"", adj:true}); }
-  evs.sort((x,y)=> x.d === y.d ? x.o - y.o : (x.d < y.d ? -1 : 1));
-  let op = 0, run = 0, D = 0, C = 0, I = 0, P = 0, R = 0; const rows = [];
-  for (const e of evs){
-    if (e.d < a){ op += e.cr - e.dr; continue; }
-    if (e.d > b) continue;
-    if (!rows.length) run = op;
-    run += e.cr - e.dr; D += e.dr; C += e.cr; I += e.inc; if (e.o === 3) P += e.cr; if (e.o === 2) R += e.cr;
-    rows.push({...e, bal:run});
-  }
-  const end = rows.length ? rows[rows.length-1].bal : op;
-  const dash = '<span class="dash">—</span>', v = (x, c) => x ? `<td class="num ${c}">${fmt(x)}</td>` : `<td>${dash}</td>`;
-  $("leds").innerHTML = `<div class="sum" style="margin:0 0 10px">
-      <div style="background:var(--card)"><span>أوردرات</span><b class="num minus">${fmt(D)}</b></div>
-      <div style="background:var(--card)"><span>سداد + مرتجعات</span><b class="num plus">${fmt(P + R)}</b></div>
-      <div style="background:var(--card)"><span>حوافز</span><b class="num" style="color:#7030A0">${fmt(I)}</b></div>
-      <div class="endbal" ${end<0?'style="background:var(--redbg)"':''}><span>رصيد التاجر — ${end>=0?"له":"عليه"}</span><b class="num" ${end<0?'style="color:var(--red)"':''}>${fmt(Math.abs(end))}</b></div>
-    </div>
-    <div class="stmt"><table>
-    <thead><tr><th>التاريخ</th><th>البيان</th><th>عليه</th><th>له</th><th>الرصيد</th></tr></thead><tbody>
-    <tr class="edge"><td colspan="4">رصيد أول الفترة</td><td class="num">${fmt(op)}</td></tr>` +
-    rows.map(r=>`<tr ${r.adj?'style="background:#FFF2CC"':''}><td class="num">${esc(r.d)}</td><td class="k" style="white-space:normal">${esc(r.desc)}</td>${v(r.dr,"minus")}${r.inc?`<td class="num" style="color:#7030A0">${fmt(r.cr)}</td>`:v(r.cr,"plus")}
-      <td class="num"><b ${r.bal<0?'style="color:var(--red)"':''}>${fmt(r.bal)}</b></td></tr>`).join("") +
-    (rows.length ? "" : `<tr><td colspan="5" class="n" style="text-align:center;padding:16px">مفيش حركات في الفترة دي</td></tr>`) +
-    `<tr class="last"><td colspan="2">رصيد التاجر (${end>=0?"له":"عليه"})</td><td class="num minus">${fmt(D)}</td><td class="num plus">${fmt(C)}</td>
-      <td class="num">${fmt(end)}</td></tr></tbody></table></div>
-    <div class="n" style="margin-top:8px;color:var(--mute);font-size:12px">عليه = أوردرات · له = سداد (كاش/بنك) + مرتجعات + حوافز${anchor?` · الكشف بادئ من باقي البنك ${fmt(anchor.a)} يوم ${esc(anchor.d)}`:""} · الرصيد الموجب = للتاجر · السداد: ${fmt(P)} · المرتجعات: ${fmt(R)} · الحوافز: ${fmt(I)}</div>`;
-}
 function bankParts(r){
   let dep = Number(r.deposit||0), od = Number(r.order_amount||0), inc = Number(r.incentive||0);
   if (!(dep || od || inc)){ const b = Number(r.balance||0); if (b >= 0) dep = b; else od = -b; }
@@ -756,7 +705,7 @@ function renderBank(m){
       <td class="num">${fmt(run)}</td><td class="hn"></td></tr></tbody></table></div>
     <div class="n" style="margin-top:8px;color:var(--mute);font-size:12px">رصيد البنك = الإيداع + من الحافز − الأوردر.  و«من الحافز» بيتخصم من رصيد حوافز التاجر (بيظهر «مستخدم» في كشف الحساب).</div>`;
 }
-function showList(){ cur = null; extra = extra || {orders:[], bank_balances:[], invoices:[], payments:[], merchant_docs:[]}; $("vst").classList.add("hide"); $("vlist").classList.remove("hide"); renderList(); }
+function showList(){ cur = null; extra = extra || {orders:[], bank_balances:[], invoices:[], merchant_docs:[]}; $("vst").classList.add("hide"); $("vlist").classList.remove("hide"); renderList(); }
 function showSt(){ $("vlist").classList.add("hide"); $("vst").classList.remove("hide"); renderSt(); window.scrollTo(0,0); }
 $("bk").onclick = showList;
 window.addEventListener("popstate", ()=>{ if (cur != null) showList(); });
@@ -792,13 +741,11 @@ function renderSt(){
   $("pord").classList.toggle("hide", pane !== "ord");
   $("pinv").classList.toggle("hide", pane !== "inv");
   $("pbank").classList.toggle("hide", pane !== "bank");
-  $("pled").classList.toggle("hide", pane !== "led");
   $("pdoc").classList.toggle("hide", pane !== "doc");
   $("cD").textContent = (()=>{const n = (extra.merchant_docs||[]).filter(r=>r.merchant_id===m.id).length; return n ? `(${n})` : "";})();
   if (pane === "ord") return renderOrders(m, a, b);
   if (pane === "inv") return renderInv(m);
   if (pane === "bank") return renderBank(m);
-  if (pane === "led") return renderLedger(m, a, b);
   if (pane === "doc") return renderDocs(m);
   let before = 0, add = 0, used = 0; const rows = [];
   for (const t of m.tx){
