@@ -180,6 +180,14 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
 .sbtn{border:1px solid #CDD2DA;background:var(--sheet);border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:600;white-space:nowrap;display:inline-grid;place-items:center}
 .sbtn.del{color:var(--red);border-color:#F0C9C4;padding:7px 10px}
 .sbtn:disabled{opacity:.5}
+.paper-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-top:1px solid var(--line)}
+.paper-row:first-child{border-top:0}
+.paper-row .tt{flex:1;min-width:0}
+.paper-row .tt b{display:block;font-weight:600}
+.paper-row .tt span{font-size:12.5px;color:var(--mute)}
+.orig{font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.orig.ok{background:#E6F2EC;color:var(--green)}
+.orig.no{background:#F1F2F4;color:var(--mute)}
 .upbox{background:var(--sheet);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
 .upbox h4{margin:0 0 10px;font-size:15px}
 .pick{display:block;border:1.5px dashed #B9C0CA;border-radius:10px;padding:18px 12px;text-align:center;color:var(--ink2);font-weight:600;cursor:pointer;background:#FAFBFC}
@@ -300,10 +308,11 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
       <div id="pinv" class="hide"><div id="invs"></div></div>
       <div id="pbank" class="hide"><div id="banks"></div></div>
       <div id="pdoc" class="hide">
+        <div id="papers"></div>
         <div class="upbox">
           <h4 data-t="upTitle"></h4>
           <div class="chips" id="dtype">
-            <button data-t="iqrar" data-v="iqrar" class="on"></button><button data-t="ikhtar" data-v="ikhtar"></button>
+            <button data-t="tax_card" data-v="tax_card" class="on"></button><button data-t="commercial_reg" data-v="commercial_reg"></button><button data-t="contract" data-v="contract"></button><button data-t="ikhtar" data-v="ikhtar"></button><button data-t="iqrar" data-v="iqrar"></button>
           </div>
           <label class="pick" for="dfile"><span id="dfname"></span></label>
           <input id="dfile" type="file" accept="image/*,application/pdf" class="hide">
@@ -375,7 +384,7 @@ const I18N = {
   tabOrd:     ["أوردرات ومرتجعات", "Orders & returns", "订单与退货"],
   tabInv:     ["الفواتير", "Invoices", "发票"],
   tabBank:    ["البنك", "Bank", "银行"],
-  tabDoc:     ["إقرار وإخطار", "Declarations", "声明与通知"],
+  tabDoc:     ["ورق التاجر", "Documents", "商户文件"],
   rAll:       ["كل الفترات", "All time", "全部"],
   rMonth:     ["الشهر ده", "This month", "本月"],
   rCustom:    ["فترة معينة", "Date range", "自定义日期"],
@@ -418,6 +427,16 @@ const I18N = {
                "银行余额 = 存款 + 来自激励 − 订单。来自激励的金额会从门店的激励余额中扣除。"],
   upTitle:    ["رفع مستند للتاجر", "Upload a document for this store", "为该门店上传文件"],
   iqrar:      ["إقرار", "Declaration", "声明"],
+  tax_card:   ["بطاقة ضريبية", "Tax card", "税卡"],
+  commercial_reg: ["سجل تجاري", "Commercial register", "商业登记"],
+  contract:   ["عقد", "Contract", "合同"],
+  papersT:    ["ورق التاجر", "Store documents", "商户文件"],
+  origOk:     ["الأصل في الشركة", "Original received", "原件已收"],
+  origNo:     ["الأصل لسه ماوصلش", "Original not received", "原件未收"],
+  nFiles:     ["{0} ملف", "{0} files", "{0} 个文件"],
+  noFile:     ["مفيش صورة", "No copy", "无副本"],
+  papersNote: ["علامة «الأصل في الشركة» بتعلّمها الإدارة لما الورق الأصلي يوصل. انت ترفع الصورة بس.", "The admin team ticks “Original received” when the paper original arrives. You only upload the copy.", "原件送达公司后由管理员勾选“原件已收”，您只需上传副本。"],
+  origMissing:["أصول ناقصة: {0}", "Missing originals: {0}", "缺少原件：{0}"],
   ikhtar:     ["إخطار", "Notice", "通知"],
   pickFile:   ["صوّر أو اختار صورة أو PDF", "Take a photo, or choose an image or PDF", "拍照，或选择图片 / PDF"],
   noteOpt:    ["ملاحظة (اختياري)", "Note (optional)", "备注（可选）"],
@@ -437,7 +456,7 @@ const I18N = {
   delOwn:     ["بتمسح اللي رفعته انت بس", "You can only delete files you uploaded", "只能删除您自己上传的文件"],
   delFail:    ["ماتمسحش — {0}", "Couldn't delete: {0}", "删除失败：{0}"],
   openFail:   ["مش قادر أفتح المستند", "Couldn't open the document", "无法打开文件"],
-  noDocs:     ["مفيش إقرارات أو إخطارات متسجلة للمحل ده", "No declarations or notices for this store yet", "该门店暂无声明或通知"],
+  noDocs:     ["مفيش ملفات مرفوعة للمحل ده لسه", "No files uploaded for this store yet", "该门店暂无上传文件"],
 };
 const LANGS = ["ar", "en", "zh"];
 const $ = id => document.getElementById(id);
@@ -498,12 +517,13 @@ const CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentC
 $("rbtn").innerHTML = ICON_REFRESH;
 
 let tok = null, refreshTok = null, expAt = 0;
-let extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[]}, xsig = null, pane = "st", okind = "";
+let extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[], merchant_originals:[]}, xsig = null, pane = "st", okind = "";
 const EXTRA = {
   orders: "id,merchant_id,date,kind,doc_no,item_name,color,qty,price,amount,status,notes",
   bank_balances: "id,merchant_id,date,balance,notes,deposit,order_amount,incentive",
   invoices: "id,merchant_id,file_path,file_name,invoice_no,pages,created_at",
-  merchant_docs: "id,merchant_id,doc_type,file_path,file_name,mime,size_kb,notes,created_at,created_by"
+  merchant_docs: "id,merchant_id,doc_type,file_path,file_name,mime,size_kb,notes,created_at,created_by",
+  merchant_originals: "id,merchant_id,doc_type,received,received_at,notes"
 };
 async function extraSig(){
   const out = [];
@@ -591,7 +611,7 @@ $("lform").addEventListener("submit", async ev => {
 function showLogin(msg){
   stopPoll();
   tok = refreshTok = null; data = null; sig = null; changed = new Set(); cur = null;
-  extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[]}; xsig = null;
+  extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[], merchant_originals:[]}; xsig = null;
   $("app").classList.add("hide"); $("login").classList.remove("hide");
   $("u").value = LS.get("rmg_user") || "";
   $("lerr").textContent = msg || "";
@@ -777,8 +797,9 @@ function renderInv(m){
 }
 
 /* ---------------- الإقرار / الإخطار ---------------- */
-const DOCT_AR = {iqrar:"إقرار", ikhtar:"إخطار"};   // اسم الملف على السيرفر يفضل عربي
-let dtype = "iqrar";
+const DOC_TYPES = ["tax_card", "commercial_reg", "contract", "ikhtar", "iqrar"];
+const DOCT_AR = {tax_card:"بطاقة ضريبية", commercial_reg:"سجل تجاري", contract:"عقد", iqrar:"إقرار", ikhtar:"إخطار"};   // اسم الملف على السيرفر يفضل عربي
+let dtype = "tax_card";
 pickIn("dtype", "v", v => { dtype = v; });
 $("dfile").addEventListener("change", () => {
   const f = $("dfile").files[0];
@@ -826,8 +847,14 @@ $("dup").onclick = async () => {
   }catch(err){ msg(t("upFail", err.net ? t("noNet") : err.message), "var(--red)"); }
   $("dup").disabled = false;
 };
+function origOf(mid, typ){ return (extra.merchant_originals||[]).some(o => o.merchant_id === mid && o.doc_type === typ && o.received); }
 function renderDocs(m){
   const rows = (extra.merchant_docs||[]).filter(r => r.merchant_id === m.id).sort((x,y)=>y.id-x.id);
+  $("papers").innerHTML = `<div class="sheet">` + DOC_TYPES.map(typ => {
+    const n = rows.filter(r => r.doc_type === typ).length, ok = origOf(m.id, typ);
+    return `<div class="paper-row"><div class="tt"><b>${esc(t(typ))}</b><span>${n ? esc(t("nFiles", n)) : esc(t("noFile"))}</span></div>
+      <span class="orig ${ok ? "ok" : "no"}">${ok ? "✔ " + esc(t("origOk")) : esc(t("origNo"))}</span></div>`;
+  }).join("") + `</div><div class="foot" style="margin:6px 0 12px">${esc(t("papersNote"))}</div>`;
   $("docs").innerHTML = rows.length ? `<div class="sheet">` + rows.map(r=>{ const img = (r.mime||"").startsWith("image"); return `
     <div class="file">
       <div class="ic">${img ? esc(t("image")) : "PDF"}</div>
@@ -968,5 +995,6 @@ function renderSt(){
 
 boot();
 </script>
+<script src="bot.js?v=1"></script>
 </body>
 </html>
