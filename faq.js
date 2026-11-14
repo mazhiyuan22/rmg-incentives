@@ -16,12 +16,19 @@
 const BOT = {
   name_ar: "المساعد",
   name_en: "Assistant",
-  welcome_ar: `أهلًا 👋 أنا مساعد صفحة الحوافز.
-اختار سؤال من تحت، أو اكتب سؤالك.
-وتقدر تسألني عن أي محل عندك: اكتب الكود أو الاسم، مثلًا «رصيد N00294».`,
-  welcome_en: `Hi 👋 I'm the incentives page assistant.
-Pick a question below or type your own.
-You can also ask about any of your stores: type its code or name, e.g. "balance N00294".`,
+  // رسالة الترحيب — {greet} = صباح الخير/مساء الخير   {name} = اسم اللي داخل
+  welcome_ar: `{greet} يا {name} 👋
+اسألني عن أي محل من محلاتك وأنا أطلّعلك الرقم على طول.`,
+  welcome_en: `{greet}, {name} 👋
+Ask me about any of your stores and I'll pull up the numbers right away.`,
+  // قبل تسجيل الدخول
+  welcome_out_ar: `أهلًا بيك 👋
+عندك مشكلة في الدخول أو سؤال عن الحوافز؟ اسألني.`,
+  welcome_out_en: `Welcome 👋
+Trouble signing in, or a question about incentives? Ask me.`,
+  // أزرار «جرّب» — بتتبعت للبوت كأنها سؤال اتكتب
+  try_ar: ["💰 حوافز كل محلاتي", "📦 صافي أوردرات كل المحلات النهارده", "📄 مين ورقه ناقص؟", "🧾 كشف حساب تفصيلي"],
+  try_en: ["💰 Incentives for all my stores", "📦 Net orders for all stores today", "📄 Who has missing papers?", "🧾 Detailed statement"],
   not_found_ar: `مش متأكد إني فهمت 🤔 جرّب تكتبها بشكل تاني، أو اختار من الأسئلة دي.
 ولو محتاج حد يرد عليك: كلّم الإدارة.`,
   not_found_en: `I'm not sure I understood 🤔 Try rephrasing, or pick one of these questions.
@@ -255,17 +262,17 @@ The coding form is under "📄 Templates to download" on the main page.`,
     a_en: `On the main page (store list) tap "📄 Templates to download". It has every form the admin team uploaded; tap "Download".`,
   },
   {
-    q_ar: "إزاي أطلع كشف حساب دائن ومدين للتاجر؟",
+    q_ar: "إزاي أطلع كشف حساب تفصيلي للتاجر؟",
     q_en: "How do I get a debit/credit statement for a merchant?",
     keys: "كشف حساب دائن مدين تفصيلي مديونيه مديونية عليه له تحصيل statement debit credit ledger owes",
     top: true,
-    a_ar: `ادخل على المحل ← تاب «دائن ومدين» ← اختار الفترة.
-مدين (على التاجر) = الأوردرات.  دائن (للتاجر) = المرتجعات + التحصيلات + إيداعات البنك + الحوافز الممنوحة.
-الحوافز المستخدمة بتنقص «رصيد الحوافز» (مثلاً نزل 100 ألف واستخدم 10 آلاف في أوردر ← رصيد الحوافز 90 ألف)، والأوردر نفسه متسجل مدين. وفوق الجدول ملخص: نزل كام / اتستخدم كام / باقي كام.
+    a_ar: `ادخل على المحل ← تاب «كشف حساب تفصيلي» ← اختار الفترة.
+مدين (على التاجر) = الأوردرات.  دائن (للتاجر) = المرتجعات + التحصيلات + إيداعات البنك + الحوافز المستخدمة.
+الحافز لما ينزل بيزوّد «رصيد الحوافز» بس، ولما يتستخدم بيتخصم من رصيد الحوافز ومن اللي على التاجر (مثلاً نزل 100 ألف واستخدم 10 آلاف في أوردر ← رصيد الحوافز 90 ألف، واللي على التاجر قلّ 10 آلاف). وفوق الجدول ملخص: نزل كام / اتستخدم كام / باقي كام.
 تحت: «طباعة / حفظ PDF» أو «تحميل Excel» وابعته للتاجر.`,
-    a_en: `Open the store → "Debit & credit" tab → choose the period.
-Debit (owed by merchant) = orders. Credit (in merchant's favour) = returns + collections + bank deposits + granted incentives.
-Used incentives reduce the incentive balance (e.g. 100k granted, 10k used on an order → 90k left), while the order itself is a debit. A summary shows granted / used / remaining.
+    a_en: `Open the store → "Detailed statement" tab → choose the period.
+Debit (owed by merchant) = orders. Credit (in merchant's favour) = returns + collections + bank deposits + used incentives.
+Granted incentives only add to the incentive balance; when used, they come off that balance and off what the merchant owes (e.g. 100k granted, 10k used → 90k left and the merchant owes 10k less). A summary shows granted / used / remaining.
 Use "Print / save PDF" or "Download Excel" and send it to the merchant.`,
   },
 ];
@@ -342,10 +349,10 @@ Pick all time / this month / a date range at the top. The yellow last row is the
     a_en: `Bank transactions: deposit, order, from incentive, and the bank balance after each.
 Bank balance = deposits + from incentive − orders.` },
   { target: "#pled", go: "store", tab: "led",
-    t_ar: "دائن ومدين", t_en: "Debit & credit",
-    a_ar: `كشف حساب تفصيلي للتاجر: الأوردرات (مدين) قصاد المرتجعات والتحصيلات وإيداعات البنك والحوافز الممنوحة (دائن). الحوافز المستخدمة بتنقص رصيد الحوافز.
+    t_ar: "كشف حساب تفصيلي", t_en: "Detailed statement",
+    a_ar: `كشف حساب تفصيلي للتاجر: الأوردرات (مدين) قصاد المرتجعات والتحصيلات وإيداعات البنك والحوافز المستخدمة (دائن)، وعمود «رصيد الحوافز» بيوضح الحوافز اللي نزلت واللي اتبقت.
 اختار الفترة، وبعدين «طباعة / حفظ PDF» أو «تحميل Excel» وابعته للتاجر.`,
-    a_en: `A detailed statement: orders (debit) against returns, collections, bank deposits and granted incentives (credit). Used incentives reduce the incentive balance.
+    a_en: `A detailed statement: orders (debit) against returns, collections, bank deposits and used incentives (credit), with an incentive-balance column.
 Pick the period, then "Print / save PDF" or "Download Excel" to send to the merchant.` },
   { target: "#pdoc", go: "store", tab: "doc",
     t_ar: "ورق التاجر", t_en: "Store documents",

@@ -465,11 +465,11 @@ const I18N = {
   tabOrd:     ["أوردرات ومرتجعات", "Orders & returns", "订单与退货"],
   tabInv:     ["الفواتير", "Invoices", "发票"],
   tabBank:    ["البنك", "Bank", "银行"],
-  tabLed:     ["دائن ومدين", "Debit & credit", "借贷明细"],
+  tabLed:     ["كشف حساب تفصيلي", "Detailed statement", "明细对账单"],
   ledPdf:     ["طباعة / حفظ PDF", "Print / save PDF", "打印 / 保存 PDF"],
   ledCsv:     ["تحميل Excel", "Download Excel", "下载 Excel"],
   ledTitle:   ["كشف حساب تفصيلي", "Detailed account statement", "明细对账单"],
-  ledDesc:    ["مدين (على التاجر) = الأوردرات.  دائن (للتاجر) = المرتجعات + التحصيلات + إيداعات البنك + الحوافز الممنوحة. الحوافز المستخدمة بتنقص رصيد الحوافز بس (الأوردر اللي اتدفع بيها قصاده الحافز اللي نزل).", "Debit (owed by merchant) = orders.  Credit (in merchant's favour) = returns + collections + bank deposits + granted incentives. Used incentives reduce the incentive balance only (the order they paid is offset by the credited incentive).", "借方（商户欠款）= 订单。贷方（商户应收）= 退货 + 收款 + 银行存款 + 发放的激励。已使用激励仅供参考（发放时已计入贷方）。"],
+  ledDesc:    ["مدين (على التاجر) = الأوردرات.  دائن (للتاجر) = المرتجعات + التحصيلات + إيداعات البنك + الحوافز المستخدمة. الحوافز الممنوحة بتزوّد «رصيد الحوافز» بس، ولما تتستخدم بتتخصم منه ومن اللي على التاجر.", "Debit (owed by merchant) = orders.  Credit (in merchant's favour) = returns + collections + bank deposits + used incentives. Granted incentives only add to the incentive balance; when used, they come off that balance and off what the merchant owes.", "借方（商户欠款）= 订单。贷方（商户应收）= 退货 + 收款 + 银行存款 + 已使用激励。发放的激励只增加激励余额，使用时从激励余额和商户欠款中扣除。"],
   kInc:       ["حوافز ممنوحة", "Incentive granted", "发放激励"],
   kIncOp:     ["رصيد حوافز سابق", "Incentives carried over", "结转激励"],
   incBox:     ["الحوافز في الفترة:", "Incentives in period:", "期间激励："],
@@ -497,8 +497,8 @@ const I18N = {
   stIncBal:   ["رصيد الحوافز", "Incentive balance", "激励余额"],
   stTotal:    ["الإجمالي", "Total", "合计"],
   stNotes:    ["ملاحظات", "Notes", "说明"],
-  stN1:       ["مدين (على التاجر) = الأوردرات. دائن (للتاجر) = المرتجعات + التحصيلات النقدية + إيداعات البنك + الحوافز الممنوحة.", "Debit (owed by the merchant) = orders. Credit (in the merchant's favour) = returns + cash collections + bank deposits + granted incentives.", "借方（商户欠款）= 订单。贷方（商户应收）= 退货 + 现金收款 + 银行存款 + 发放的激励。"],
-  stN2:       ["الحوافز المستخدمة تُخصم من رصيد الحوافز؛ والأوردر المدفوع بها مسجّل مدين، فلا يتكرر خصمها من رصيد الحساب.", "Used incentives are deducted from the incentive balance; the order they paid is recorded as a debit, so they are not deducted twice.", "已使用激励从激励余额中扣除；其支付的订单已记为借方，不会重复扣减。"],
+  stN1:       ["مدين (على التاجر) = الأوردرات. دائن (للتاجر) = المرتجعات + التحصيلات النقدية + إيداعات البنك + الحوافز المستخدمة.", "Debit (owed by the merchant) = orders. Credit (in the merchant's favour) = returns + cash collections + bank deposits + used incentives.", "借方（商户欠款）= 订单。贷方（商户应收）= 退货 + 现金收款 + 银行存款 + 已使用激励。"],
+  stN2:       ["الحوافز الممنوحة تُضاف إلى رصيد الحوافز فقط، وعند استخدامها تُخصم من رصيد الحوافز ومن رصيد الحساب.", "Granted incentives are added to the incentive balance only; when used, they are deducted from both the incentive balance and the account balance.", "发放的激励仅计入激励余额；使用时同时从激励余额和账户余额中扣除。"],
   stN3:       ["برجاء مراجعة الكشف وإبلاغ المشرف المسؤول بأي ملاحظات.", "Please review this statement and report any discrepancy to your supervisor.", "请核对本对账单，如有差异请告知负责主管。"],
   stSig1:     ["إعداد", "Prepared by", "编制"],
   stSig2:     ["اعتماد", "Approved by", "审核"],
@@ -1153,13 +1153,14 @@ function ledgerRows(m, a, b){
   for (const r of extra.bank_balances) if (r.merchant_id === m.id){ const dep = bankParts(r)[0]; if (dep) ev.push([r.date, 3, r.id, "kDep", r.notes||"", 0, dep]); }
   m.tx.forEach((r, i) => {
     const n = /\.(xlsx|xlsm|xls)$/i.test(r.notes) ? "" : r.notes;
-    if (r.type === "incentive" || r.type === "opening") ev.push([r.date, 4, i, r.type === "opening" ? "kIncOp" : "kInc", n, 0, r.amount, 0]);
-    else if (r.type === "usage") ev.push([r.date, 5, i, "kUsed", n, 0, 0, r.amount]);   // للعرض بس — الحافز اتحسب دائن لما نزل
+    // الحافز الممنوح بيزوّد «رصيد الحوافز» بس — والمستخدم دائن في الحساب وبينقص رصيد الحوافز
+    if (r.type === "incentive" || r.type === "opening") ev.push([r.date, 4, i, r.type === "opening" ? "kIncOp" : "kInc", n, 0, 0, r.amount]);
+    else if (r.type === "usage") ev.push([r.date, 5, i, "kUsed", n, 0, r.amount, 0]);
   });
   ev.sort((x, y) => (x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : x[1] - y[1] || x[2] - y[2]));
   let opening = 0, run = null, incOpen = 0, incRun = 0; const out = [];
   for (const [d, , , k, ref, dr, cr, info] of ev){
-    const inc = k === "kInc" || k === "kIncOp" ? cr : k === "kUsed" ? -info : 0;
+    const inc = k === "kInc" || k === "kIncOp" ? info : k === "kUsed" ? -cr : 0;
     if (d < a){ opening += dr - cr; incOpen += inc; continue; }
     if (d > b) continue;
     if (run === null){ run = opening; incRun = incOpen; }
@@ -1167,7 +1168,7 @@ function ledgerRows(m, a, b){
     out.push({date:d, kind:k, ref, dr, cr, info:info||0, bal:run, inc: inc ? incRun : null});
   }
   const sum = f => out.reduce((s, r) => s + f(r), 0);
-  const incIn = sum(r => r.kind === "kInc" || r.kind === "kIncOp" ? r.cr : 0), incUsed = sum(r => r.kind === "kUsed" ? r.info : 0);
+  const incIn = sum(r => r.kind === "kInc" || r.kind === "kIncOp" ? r.info : 0), incUsed = sum(r => r.kind === "kUsed" ? r.cr : 0);
   return {opening, rows:out, end: out.length ? out[out.length-1].bal : opening, inc:{open:incOpen, in:incIn, used:incUsed, left:incOpen + incIn - incUsed}};
 }
 let ledCache = null;

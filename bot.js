@@ -20,6 +20,11 @@
   .bm{max-width:88%;padding:9px 12px;border-radius:12px;font-size:14px;line-height:1.55;white-space:pre-line;word-wrap:break-word}
   .bm.me{align-self:flex-end;background:var(--ink,#17202B);color:#fff;border-end-end-radius:4px}
   .bm.bot{align-self:flex-start;background:var(--sheet,#fff);border:1px solid var(--line,#E4E7EC);border-end-start-radius:4px}
+  .bm.welcome{background:#FFF8DC;border-color:#F3DE8A}
+  .bm.welcome b{display:block;font-size:15.5px;font-weight:700;margin-bottom:2px}
+  .bm.welcome span{display:block;color:#4a4a4a}
+  .bm.hint{background:none;border:0;padding:4px 2px 0;font-size:12.5px;color:var(--mute,#667085)}
+  .bchips.try button{background:#fff;border-color:#E9C84A;font-weight:500}
   .bchips{display:flex;flex-wrap:wrap;gap:6px;align-self:flex-start;max-width:100%}
   .bchips button{border:1px solid #CDD2DA;background:var(--sheet,#fff);border-radius:999px;padding:6px 11px;font-size:13px;cursor:pointer;
     color:var(--ink2,#3A4452);text-align:start}
@@ -69,7 +74,16 @@
   const ar = () => (typeof lang === "undefined" ? "ar" : lang) === "ar";
   const L = (o, k) => (o && (ar() ? o[k + "_ar"] : o[k + "_en"])) || (o && (o[k + "_ar"] || o[k + "_en"])) || "";
   const UI = {
-    send: ["إرسال", "Send"], ph: ["اكتب سؤالك…", "Type your question…"],
+    send: ["إرسال", "Send"], ph: ["اكتب سؤالك أو كود المحل…", "Ask a question or type a store code…"],
+    hello: ["{greet} يا {name} 👋\nاسألني عن أي محل من محلاتك.", "{greet}, {name} 👋\nAsk me about any of your stores."],
+    helloOut: ["أهلًا بيك 👋\nاسألني عن الدخول أو الحوافز.", "Welcome 👋\nAsk me about signing in or incentives."],
+    tryLbl: ["جرّب:", "Try:"],
+    about: ["📍 على محل {0}", "📍 About {0}"],
+    papOk: ["✔ مفيش مشكلة ورق متسجلة على المحل ده", "✔ No paperwork issue recorded for this store"],
+    papBad: ["⚠ عليه مشكلة ورق: {0}", "⚠ Paperwork issue: {0}"], papBad0: ["مشكلة ورق", "paperwork issue"],
+    papFiles: ["{0} ملف", "{0} file(s)"], papNoFile: ["مفيش ملف", "no file"],
+    papOrig: ["الأصل في الشركة ✔", "Original received ✔"], papNoOrig: ["الأصل مش في الشركة", "Original not received"],
+    papSum: ["الأصول اللي في الشركة: {0} من {1}", "Originals received: {0} of {1}"], faqLbl: ["أسئلة بتتسأل كتير:", "Common questions:"],
     found: ["لقيت {0} محل — اكتب الكود عشان أحدد:", "I found {0} stores. Type the code to narrow it down:"],
     avail: ["الرصيد المتاح", "Available balance"], used: ["المستخدم", "Used"], bank: ["رصيد البنك", "Bank balance"],
     open: ["افتح كشف الحساب", "Open statement"], paper0: ["مفيش ولا محل عندك عليه مشكلة ورق ✔", "None of your stores has a paperwork issue ✔"],
@@ -102,7 +116,7 @@
   }
   function chips(list, title) {
     if (!list.length) return;
-    if (title) add("bot", E(title));
+    if (title) add("bot hint", E(title));
     const box = document.createElement("div"); box.className = "bchips";
     list.forEach(q => {
       const b = document.createElement("button"); b.type = "button"; b.textContent = L(q, "q");
@@ -159,20 +173,50 @@
     }, 120);
   }
 
+  function welcome() {
+    const h = new Date().getHours();
+    const greet = ar() ? (h < 12 ? "صباح الخير" : "مساء الخير") : (h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening");
+    const nm = (loggedIn() && data.who) ? String(data.who).trim().split(/\s+/) : [];
+    const who = nm.length > 2 ? nm[0] : nm.join(" ");   // «مشرف الجيزة» كامل — «أحمد محمد علي» ← أحمد
+    let txt = loggedIn() ? (L(CFG, "welcome") || u("hello")) : (L(CFG, "welcome_out") || u("helloOut"));
+    txt = txt.replace("{greet}", greet).replace(who ? "{name}" : /\s*(يا|,)?\s*\{name\}/, who);
+    const [first, ...rest] = txt.split("\n");
+    const d = add("bot welcome", `<b>${E(first)}</b>${rest.length ? "<span>" + E(rest.join("\n")) + "</span>" : ""}`);
+    if (loggedIn()) {
+      const tries = (ar() ? CFG.try_ar : CFG.try_en) || [];
+      if (tries.length) {
+        add("bot hint", E(u("tryLbl")));
+        const box = document.createElement("div"); box.className = "bchips try";
+        tries.forEach(q => {
+          const b = document.createElement("button"); b.type = "button"; b.textContent = q;
+          b.onclick = () => { add("me", E(q)); answer(q.replace(/^[^\p{L}\p{N}]+/u, "")); };
+          box.appendChild(b);
+        });
+        msgs.appendChild(box);
+      }
+      tourChip();
+    }
+    const st = starters();
+    if (st.length) chips(st, loggedIn() ? u("faqLbl") : "");
+    return d;
+  }
+
   function reset() {
+    ctx = null; pend = null;
     msgs.innerHTML = "";
     $b("botName").textContent = L(CFG, "name") || (ar() ? "المساعد" : "Assistant");
     $b("botIn").placeholder = u("ph"); $b("botSend").textContent = u("send");
-    add("bot", E(L(CFG, "welcome")));
-    if (loggedIn()) tourChip();
-    chips(starters());
+    welcome();
   }
 
   // ---------- فهم السؤال
   const STOP = new Set(["رصيد", "محل", "المحل", "كام", "بكام", "ايه", "عايز", "اعرف", "كشف", "حساب", "بتاع", "بتاعه", "لمحل", "في",
     "حوافز", "حافز", "اوردرات", "اوردر", "أوردرات", "أوردر", "مرتجعات", "مرتجع", "صافي", "عمل", "عامل", "عملت", "شهر", "يوم", "النهارده",
     "امبارح", "الشهر", "ده", "اللي", "فات", "كل", "عند", "محلات", "orders", "order", "net", "returns", "incentives", "month", "today",
-    "balance", "store", "shop", "of", "the", "what", "is", "how", "much", "for", "show", "me"].map(N));
+    "balance", "store", "shop", "of", "the", "what", "is", "how", "much", "for", "show", "me",
+    "ورق", "ورقه", "ورقة", "الورق", "اوراق", "أوراق", "سليم", "سليمه", "مظبوط", "كامل", "ناقص", "ولا", "لا", "هو", "هل", "بتاعه", "بتاعته",
+    "بطاقه", "بطاقة", "ضريبيه", "ضريبية", "سجل", "تجاري", "عقد", "العقد", "اخطار", "إخطار", "اقرار", "إقرار", "اصول", "أصول", "الاصل", "الأصل",
+    "وصل", "وصلت", "استلمنا", "طيب", "و", "بقى", "paper", "papers", "documents", "ok", "complete", "his", "its"].map(N));
 
   function findStores(q) {
     const nq = N(q), out = [];
@@ -279,10 +323,37 @@
     msgs.appendChild(box); msgs.scrollTop = msgs.scrollHeight;
   }
   let pend = null;            // سؤال لسه مستني تكملة: {intent, stores, per}
+  let ctx = null;             // آخر محل اتكلمنا عليه — بيفضل لحد ما يتذكر محل تاني
+  const remember = st => { if (Array.isArray(st) && st.length === 1) ctx = st[0]; };
+  const ctxStore = () => {
+    if (ctx && data.ms.some(m => m.id === ctx.id)) return [data.ms.find(m => m.id === ctx.id)];
+    const open = typeof cur !== "undefined" && cur != null && data.ms.find(m => m.id === cur);   // المحل المفتوح في الصفحة
+    return open ? [open] : null;
+  };
+  const DOCS = ["tax_card", "commercial_reg", "contract", "ikhtar", "iqrar"];
+  const DOC_N = {tax_card: ["البطاقة الضريبية", "Tax card"], commercial_reg: ["السجل التجاري", "Commercial register"],
+                 contract: ["العقد", "Contract"], ikhtar: ["الإخطار", "Notification"], iqrar: ["الإقرار", "Declaration"]};
+  function paperCard(m) {
+    const ex = typeof extra !== "undefined" ? extra : {};
+    const files = (ex.merchant_docs || []).filter(r => r.merchant_id === m.id);
+    const orig = typ => (ex.merchant_originals || []).some(o => o.merchant_id === m.id && o.doc_type === typ && o.received);
+    const nOrig = DOCS.filter(orig).length;
+    return `<span class="bstore"><span class="n">${E(m.name)}</span> <span class="num">${E(m.code)}</span>
+      <span class="r" style="color:${m.bad ? "var(--red,#C2362B)" : "var(--green,#1E7B45)"}">${E(m.bad ? u("papBad", m.note || u("papBad0")) : u("papOk"))}</span>
+      ${DOCS.map(typ => { const n = files.filter(r => r.doc_type === typ).length, ok = orig(typ);
+        return `<span class="r"><span>${E(DOC_N[typ][ar() ? 0 : 1])} <small style="color:var(--mute,#667085)">(${E(n ? u("papFiles", n) : u("papNoFile"))})</small></span>
+          <span style="color:${ok ? "var(--green,#1E7B45)" : "var(--mute,#667085)"}">${E(ok ? u("papOrig") : u("papNoOrig"))}</span></span>`; }).join("")}
+      <span class="r"><b>${E(u("papSum", nOrig, DOCS.length))}</b></span>
+      <button type="button" data-open="${m.id}">${E(u("open"))}</button></span>`;
+  }
   function cont() {           // كمّل السؤال لما تتجمع البيانات
     if (!pend.stores) { add("bot", E(u("whichStore"))); return; }
     if (pend.intent === "orders" && !pend.per) { add("bot", E(u("whichPeriod"))); periodChips(); return; }
     const p = pend; pend = null;
+    remember(p.stores);
+    const pre = p.fromCtx ? E(u("about", p.stores[0].name)) + "<br>" : "";
+    if (p.intent === "paper") return add("bot", pre + p.stores.map(paperCard).join(""));
+    if (pre) add("bot hint", pre.replace("<br>", ""));
     if (p.intent === "orders") return sayOrders(p.stores, p.per);
     if (p.intent === "inc") return sayIncentives(p.stores === "all" ? data.ms.slice(0, 5) : p.stores);
     return add("bot", (p.stores === "all" ? data.ms.slice(0, 5) : p.stores).map(storeCard).join(""));
@@ -290,12 +361,14 @@
   function storesFrom(q) {
     if (/كل المحلات|كل محلاتي|كلهم|all stores|all my stores/i.test(q)) return "all";
     const st = findStores(q);
+    if (st.length === 1) ctx = st[0];
     if (st.length && st.length <= 5) return st;
     if (st.length > 5) { add("bot", E(u("found", st.length)) + st.slice(0, 8).map(m => `<br>• ${E(m.name)} — <span class="num">${E(m.code)}</span>`).join("")); return "many"; }
     return null;
   }
   function dataAnswer(q) {
-    const intent = /اوردر|أوردر|اوردرات|أوردرات|طلبي|مرتجع|صافي|order|return|net/i.test(q) ? "orders" :
+    const intent = /ورق|اوراق|أوراق|مستند|بطاقه|بطاقة|سجل|عقد|اخطار|إخطار|اقرار|إقرار|اصول|أصول|الاصل|الأصل|paper|document|original/i.test(q) ? "paper" :
+                   /اوردر|أوردر|اوردرات|أوردرات|طلبي|مرتجع|صافي|order|return|net/i.test(q) ? "orders" :
                    /حافز|حوافز|incentive/i.test(q) ? "inc" : /رصيد|balance|كام/i.test(q) ? "bal" : null;
     if (pend) {                                   // تكملة لسؤال قبله
       if (!pend.stores) { const s2 = storesFrom(q); if (s2 === "many") return true; if (s2) { pend.stores = s2; cont(); return true; } }
@@ -310,10 +383,12 @@
     const st = storesFrom(q);
     if (st === "many") return true;
     if (!intent) {
-      if (st && st !== "all") { add("bot", st.map(storeCard).join("")); return true; }
+      if (st && st !== "all") { remember(st); add("bot", st.map(storeCard).join("")); return true; }
       return false;
     }
-    pend = {intent, stores: st || (data.ms.length === 1 ? [data.ms[0]] : null), per: intent === "orders" ? parsePeriod(q) : null};
+    const mem = !st && ctxStore();
+    pend = {intent, stores: st || mem || (data.ms.length === 1 ? [data.ms[0]] : null), per: intent === "orders" ? parsePeriod(q) : null,
+            fromCtx: !!mem};
     if (!pend.stores && intent !== "orders" && !/محل|store|shop|عند|بتاع/.test(q) && W(q).every(w => STOP.has(w) || w.length < 2)) { pend = null; return false; }
     cont(); return true;
   }
@@ -323,7 +398,8 @@
     if (/شرح|اشرح|علمني|تعليمات|جوله|tutorial|tour|guide|walkthrough/i.test(nq)) return startTour();
     const asksMeaning = /معناها|يعني|mean/.test(q);
     if (loggedIn() && !asksMeaning) {
-      if (/ورق|paper/i.test(q) && !/[A-Za-z]*\d{3,}/.test(q)) {
+      if (/ورق|paper/i.test(q) && !/[A-Za-z]*\d{3,}/.test(q) &&
+          (/مين|كل|المحلات|محلاتي|اللي|انهي|أنهي|which|who|all/i.test(q) || (!ctxStore() && !findStores(q).length))) {
         const bad = data.ms.filter(m => m.bad);
         if (!bad.length) return add("bot", E(u("paper0")));
         return add("bot", E(u("paperN", bad.length)) + bad.slice(0, 15).map(storeCard).join(""));
@@ -346,6 +422,7 @@
   msgs.addEventListener("click", e => {
     const b = e.target.closest("[data-open]"); if (!b) return;
     const id = +b.dataset.open;
+    ctx = data.ms.find(m => m.id === id) || ctx;
     try { cur = id; changed.delete(id); showSt(); } catch (err) {}
     if (window.innerWidth < 700) $b("botBox").classList.add("hide");
   });
