@@ -205,6 +205,24 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
 .st-title{text-align:end}
 .st-title h1{margin:0;font-size:16pt;font-weight:700}
 .st-title span{font-size:8.5pt;color:#6b6b6b}
+.st-mer{margin:12px 0 10px;text-align:center}
+.st-mer>b{font-size:14pt}
+.st-mer>.num{font-size:11pt;color:#555}
+.st-mer>span:not(.num){display:inline-block;margin:4px 10px 0;font-size:8.5pt;color:#6b6b6b}
+.st td.nt{font-size:8pt;color:#555;max-width:170px}
+.st tr.used td{color:#8a8a8a}
+.st td.neg{color:#b3261e}
+.st-low{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-top:14px;break-inside:avoid}
+.st-cat{font-size:8.6pt}
+.st-cat th{background:#f2f2f2!important;color:#1d1d1f!important}
+.st-cat tr.tot td{background:#26292e!important}
+.st-box{display:grid;gap:0;border:1px solid #d9d9d9;border-radius:6px;overflow:hidden;align-self:start}
+.st-box div{padding:7px 10px;border-bottom:1px solid #e6e6e6}
+.st-box div:last-child{border-bottom:0}
+.st-box span{display:block;font-size:7.5pt;color:#6b6b6b}
+.st-box b{font-size:12pt}
+.st-box small{display:block;font-size:7.5pt;color:#8a6d00;font-weight:600}
+.st-box .end{background:#FFF4CC}
 .st-info{display:grid;grid-template-columns:repeat(3,1fr);margin:12px 0;border:1px solid #d9d9d9;border-radius:6px;overflow:hidden}
 .st-info div{padding:6px 10px;border-inline-end:1px solid #e6e6e6;border-bottom:1px solid #e6e6e6}
 .st-info div:nth-child(3n){border-inline-end:0}
@@ -469,14 +487,19 @@ const I18N = {
   ledPdf:     ["طباعة / حفظ PDF", "Print / save PDF", "打印 / 保存 PDF"],
   ledCsv:     ["تحميل Excel", "Download Excel", "下载 Excel"],
   ledTitle:   ["كشف حساب تفصيلي", "Detailed account statement", "明细对账单"],
-  ledDesc:    ["مدين (على التاجر) = الأوردرات.  دائن (للتاجر) = المرتجعات + التحصيلات + إيداعات البنك + الحوافز المستخدمة. الحوافز الممنوحة بتزوّد «رصيد الحوافز» بس، ولما تتستخدم بتتخصم منه ومن اللي على التاجر.", "Debit (owed by merchant) = orders.  Credit (in merchant's favour) = returns + collections + bank deposits + used incentives. Granted incentives only add to the incentive balance; when used, they come off that balance and off what the merchant owes.", "借方（商户欠款）= 订单。贷方（商户应收）= 退货 + 收款 + 银行存款 + 已使用激励。发放的激励只增加激励余额，使用时从激励余额和商户欠款中扣除。"],
-  kInc:       ["حوافز ممنوحة", "Incentive granted", "发放激励"],
+  ledDesc:    ["مدين = الأوردرات.  دائن = المرتجعات + التحصيلات + إيداعات البنك + فواتير الحوافز.  الرصيد = دائن − مدين (بالسالب يبقى على التاجر). الحافز المستخدم سطر للبيان بس.", "Debit = orders.  Credit = returns + collections + bank deposits + incentive invoices.  Balance = credit − debit (negative = owed by the merchant). Used incentives are shown for reference only.", "借方 = 订单。贷方 = 退货 + 收款 + 银行存款 + 激励发票。余额 = 贷方 − 借方（负数 = 商户欠款）。已使用激励仅供参考。"],
+  kInc:       ["فاتورة حافز", "Incentive invoice", "激励发票"],
   kIncOp:     ["رصيد حوافز سابق", "Incentives carried over", "结转激励"],
   incBox:     ["الحوافز في الفترة:", "Incentives in period:", "期间激励："],
   incIn:      ["نزلت", "Granted", "发放"],
   incLeft:    ["الباقي", "Remaining", "剩余"],
   infoOnly:   ["للعرض بس", "reference only", "仅供参考"],
   incBal:     ["رصيد الحوافز:", "Incentive balance:", "激励余额："],
+  colType:    ["نوع الحركة", "Transaction type", "交易类型"],
+  colDoc:     ["رقم المستند", "Document no.", "单据号"],
+  colNote:    ["ملاحظات", "Note", "备注"],
+  stItem:     ["البند", "Item", "项目"],
+  stIncCat:   ["الحوافز", "Incentives", "激励"],
   coName:     ["RMG International", "RMG International", "RMG International"],
   coSub:      ["الموزع المعتمد لهواتف realme في مصر — قسم التريد", "Authorized realme distributor in Egypt — Trade Department", "realme 埃及授权分销商 — 贸易部"],
   stMer:      ["التاجر", "Merchant", "商户"],
@@ -497,8 +520,8 @@ const I18N = {
   stIncBal:   ["رصيد الحوافز", "Incentive balance", "激励余额"],
   stTotal:    ["الإجمالي", "Total", "合计"],
   stNotes:    ["ملاحظات", "Notes", "说明"],
-  stN1:       ["مدين (على التاجر) = الأوردرات. دائن (للتاجر) = المرتجعات + التحصيلات النقدية + إيداعات البنك + الحوافز المستخدمة.", "Debit (owed by the merchant) = orders. Credit (in the merchant's favour) = returns + cash collections + bank deposits + used incentives.", "借方（商户欠款）= 订单。贷方（商户应收）= 退货 + 现金收款 + 银行存款 + 已使用激励。"],
-  stN2:       ["الحوافز الممنوحة تُضاف إلى رصيد الحوافز فقط، وعند استخدامها تُخصم من رصيد الحوافز ومن رصيد الحساب.", "Granted incentives are added to the incentive balance only; when used, they are deducted from both the incentive balance and the account balance.", "发放的激励仅计入激励余额；使用时同时从激励余额和账户余额中扣除。"],
+  stN1:       ["مدين = الأوردرات. دائن = المرتجعات + التحصيلات النقدية + إيداعات البنك + فواتير الحوافز. الرصيد = دائن − مدين، والسالب يعني رصيد على التاجر.", "Debit = orders. Credit = returns + cash collections + bank deposits + incentive invoices. Balance = credit − debit; a negative balance is owed by the merchant.", "借方 = 订单。贷方 = 退货 + 现金收款 + 银行存款 + 激励发票。余额 = 贷方 − 借方，负数表示商户欠款。"],
+  stN2:       ["الحافز يُسجَّل دائن عند صدوره. سطر «حافز مستخدم» للبيان فقط ولا يغيّر الرصيد، ويُخصم من رصيد الحوافز.", "An incentive is credited when issued. An “Incentive used” line is for reference only: it does not change the balance and is deducted from the incentive balance.", "激励在发放时记入贷方。“已使用激励”行仅供参考，不影响余额，只从激励余额中扣除。"],
   stN3:       ["برجاء مراجعة الكشف وإبلاغ المشرف المسؤول بأي ملاحظات.", "Please review this statement and report any discrepancy to your supervisor.", "请核对本对账单，如有差异请告知负责主管。"],
   stSig1:     ["إعداد", "Prepared by", "编制"],
   stSig2:     ["اعتماد", "Approved by", "审核"],
@@ -514,7 +537,7 @@ const I18N = {
   kReturn:    ["مرتجع", "Return", "退货"],
   kColl:      ["تحصيل نقدي", "Cash collection", "现金收款"],
   kDep:       ["إيداع بنك", "Bank deposit", "银行存款"],
-  kUsed:      ["حوافز مستخدمة", "Used incentives", "已使用激励"],
+  kUsed:      ["حافز مستخدم", "Incentive used", "已使用激励"],
   owes:       ["على التاجر", "owed by merchant", "商户欠款"],
   owed:       ["للتاجر", "owed to merchant", "应付商户"],
   ledEnd:     ["الرصيد آخر الفترة", "Closing balance", "期末余额"],
@@ -1142,60 +1165,71 @@ function renderSt(){
 
 /* ---------------- كشف حساب تفصيلي (دائن ومدين) — من صفر ---------------- */
 function ledgerRows(m, a, b){
+  // زي كشف B-TECH: الرصيد = دائن − مدين (سالب = على التاجر، موجب = للتاجر)
+  // الحافز دائن أول ما ينزل — والمستخدم سطر بيان بس (اتحسب خلاص) وبينقص رصيد الحوافز
   const ev = [], docs = new Map();
   for (const r of extra.orders) if (r.merchant_id === m.id){
     const k = r.kind + "|" + (r.doc_no || ("#" + r.id));
     const d = docs.get(k) || {kind:r.kind, doc:r.doc_no || ("#" + r.id), date:r.date, amount:0, id:r.id};
     d.amount += Number(r.amount||0); if (r.date < d.date) d.date = r.date; docs.set(k, d);
   }
-  for (const d of docs.values()) ev.push(d.kind === "return" ? [d.date, 1, d.id, "kReturn", d.doc, 0, d.amount] : [d.date, 0, d.id, "kOrder", d.doc, d.amount, 0]);
-  for (const r of (extra.collections||[])) if (r.merchant_id === m.id) ev.push([r.date, 2, r.id, "kColl", r.notes||"", 0, Number(r.amount||0)]);
-  for (const r of extra.bank_balances) if (r.merchant_id === m.id){ const dep = bankParts(r)[0]; if (dep) ev.push([r.date, 3, r.id, "kDep", r.notes||"", 0, dep]); }
+  for (const d of docs.values()) ev.push(d.kind === "return" ? {d:d.date, o:1, i:d.id, k:"kReturn", ref:d.doc, dr:0, cr:d.amount}
+                                                             : {d:d.date, o:0, i:d.id, k:"kOrder", ref:d.doc, dr:d.amount, cr:0});
+  for (const r of (extra.collections||[])) if (r.merchant_id === m.id) ev.push({d:r.date, o:2, i:r.id, k:"kColl", ref:"", note:r.notes||"", dr:0, cr:Number(r.amount||0)});
+  for (const r of extra.bank_balances) if (r.merchant_id === m.id){ const dep = bankParts(r)[0]; if (dep) ev.push({d:r.date, o:3, i:r.id, k:"kDep", ref:r.notes||"", dr:0, cr:dep}); }
   m.tx.forEach((r, i) => {
     const n = /\.(xlsx|xlsm|xls)$/i.test(r.notes) ? "" : r.notes;
-    // الحافز الممنوح بيزوّد «رصيد الحوافز» بس — والمستخدم دائن في الحساب وبينقص رصيد الحوافز
-    if (r.type === "incentive" || r.type === "opening") ev.push([r.date, 4, i, r.type === "opening" ? "kIncOp" : "kInc", n, 0, 0, r.amount]);
-    else if (r.type === "usage") ev.push([r.date, 5, i, "kUsed", n, 0, r.amount, 0]);
+    if (r.type === "incentive" || r.type === "opening") ev.push({d:r.date, o:4, i, k:r.type === "opening" ? "kIncOp" : "kInc", ref:"", note:n, dr:0, cr:r.amount, inc:r.amount});
+    else if (r.type === "usage") ev.push({d:r.date, o:5, i, k:"kUsed", ref:"", note:n, dr:0, cr:0, used:r.amount, inc:-r.amount});
   });
-  ev.sort((x, y) => (x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : x[1] - y[1] || x[2] - y[2]));
+  ev.sort((x, y) => (x.d < y.d ? -1 : x.d > y.d ? 1 : x.o - y.o || x.i - y.i));
   let opening = 0, run = null, incOpen = 0, incRun = 0; const out = [];
-  for (const [d, , , k, ref, dr, cr, info] of ev){
-    const inc = k === "kInc" || k === "kIncOp" ? info : k === "kUsed" ? -cr : 0;
-    if (d < a){ opening += dr - cr; incOpen += inc; continue; }
-    if (d > b) continue;
+  for (const e of ev){
+    if (e.d < a){ opening += e.cr - e.dr; incOpen += e.inc || 0; continue; }
+    if (e.d > b) continue;
     if (run === null){ run = opening; incRun = incOpen; }
-    run += dr - cr; incRun += inc;
-    out.push({date:d, kind:k, ref, dr, cr, info:info||0, bal:run, inc: inc ? incRun : null});
+    run += e.cr - e.dr; incRun += e.inc || 0;
+    out.push({date:e.d, kind:e.k, ref:e.ref || "", note:e.note || "", dr:e.dr, cr:e.cr, used:e.used || 0, bal:run, inc: e.inc ? incRun : null});
   }
-  const sum = f => out.reduce((s, r) => s + f(r), 0);
-  const incIn = sum(r => r.kind === "kInc" || r.kind === "kIncOp" ? r.info : 0), incUsed = sum(r => r.kind === "kUsed" ? r.cr : 0);
-  return {opening, rows:out, end: out.length ? out[out.length-1].bal : opening, inc:{open:incOpen, in:incIn, used:incUsed, left:incOpen + incIn - incUsed}};
+  const sum = (k, f) => out.filter(r => k.includes(r.kind)).reduce((s, r) => s + r[f], 0);
+  const incIn = sum(["kInc", "kIncOp"], "cr"), incUsed = sum(["kUsed"], "used");
+  return {opening, rows:out, end: out.length ? out[out.length-1].bal : opening,
+          inc:{open:incOpen, in:incIn, used:incUsed, left:incOpen + incIn - incUsed},
+          cats:[["kOrder", sum(["kOrder"], "dr"), 0], ["kReturn", 0, sum(["kReturn"], "cr")], ["kColl", 0, sum(["kColl"], "cr")],
+                ["kDep", 0, sum(["kDep"], "cr")], ["kInc", 0, incIn]]};
+}
+const ledSide = v => v < -0.004 ? t("owes") : v > 0.004 ? t("owed") : "";
+function rowNote(r){
+  const parts = [];
+  if (r.used) parts.push(fmt(r.used));
+  if (r.note) parts.push(r.note);
+  if (r.inc !== null && r.inc !== undefined) parts.push(`${t("incBal")} ${fmt(r.inc)}`);
+  return parts.join(" — ");
 }
 let ledCache = null;
 function renderLedger(m, a, b){
   const L = ledgerRows(m, a, b), dash = '<span class="dash">—</span>';
   ledCache = {m, a, b, L};
-  const side = v => v > 0.004 ? t("owes") : v < -0.004 ? t("owed") : "";
   const D = L.rows.reduce((s, r) => s + r.dr, 0), C = L.rows.reduce((s, r) => s + r.cr, 0);
   $("ledger").innerHTML = `<div class="ledhead"><b>${esc(t("ledTitle"))}</b><span><b>${esc(m.name)}</b> — <span class="num">${esc(m.code)}</span></span>
       <span>${esc(a > "0001" ? a : "")} ${a > "0001" || b < "9999" ? "→" : ""} ${esc(b < "9999" ? b : "")}</span><span>${esc(t("ledDesc"))}</span></div>
     <div class="totals"><div><span>${esc(t("debit"))}</span><b class="num minus">${fmt(D)}</b></div>
       <div><span>${esc(t("credit"))}</span><b class="num plus">${fmt(C)}</b></div>
-      <div class="key"><span>${esc(t("ledEnd"))} ${esc(side(L.end))}</span><b class="num">${fmt(Math.abs(L.end))}</b></div></div>
+      <div class="key"><span>${esc(t("ledEnd"))} ${esc(ledSide(L.end))}</span><b class="num">${fmt(Math.abs(L.end))}</b></div></div>
     <div class="incsum"><b>${esc(t("incBox"))}</b>
       <span>${esc(t("incIn"))} <b class="num plus">${fmt(L.inc.in)}</b></span>
       <span>${esc(t("kUsed"))} <b class="num">${fmt(L.inc.used)}</b></span>
       <span>${esc(t("incLeft"))} <b class="num">${fmt(L.inc.left)}</b></span></div>
-    <div class="tbl"><table><thead><tr><th>${esc(t("date"))}</th><th>${esc(t("desc"))}</th><th class="hn">${esc(t("ref"))}</th>
+    <div class="tbl"><table><thead><tr><th>${esc(t("date"))}</th><th>${esc(t("colType"))}</th><th class="hn">${esc(t("colDoc"))}</th>
       <th class="r">${esc(t("debit"))}</th><th class="r">${esc(t("credit"))}</th><th class="r">${esc(t("balance"))}</th></tr></thead><tbody>
       <tr class="edge"><td colspan="2">${esc(t("openBal"))}</td><td class="hn"></td><td></td><td></td><td class="num r">${fmt(L.opening)}</td></tr>` +
-    L.rows.map(r => `<tr${r.info ? ' class="info"' : ""}><td class="num">${esc(r.date)}</td><td class="k">${esc(t(r.kind))}${r.info ? `<small>${fmt(r.info)}</small>` : ""}${r.inc !== null ? `<small class="incb">${esc(t("incBal"))} ${fmt(r.inc)}</small>` : ""}</td><td class="n hn">${esc(r.ref)}</td>
+    L.rows.map(r => { const nt = rowNote(r); return `<tr${r.kind === "kUsed" ? ' class="info"' : ""}><td class="num">${esc(r.date)}</td><td class="k">${esc(t(r.kind))}${nt ? `<small class="${r.inc !== null ? "incb" : ""}">${esc(nt)}</small>` : ""}</td><td class="n hn">${esc(r.ref)}</td>
       ${r.dr ? `<td class="num r minus">${fmt(r.dr)}</td>` : `<td class="r">${dash}</td>`}
       ${r.cr ? `<td class="num r plus">${fmt(r.cr)}</td>` : `<td class="r">${dash}</td>`}
-      <td class="num r"><b>${fmt(r.bal)}</b></td></tr>`).join("") +
+      <td class="num r${r.bal < -0.004 ? " minus" : ""}"><b>${fmt(r.bal)}</b></td></tr>`; }).join("") +
     (L.rows.length ? "" : `<tr><td colspan="6" class="n" style="text-align:center;padding:18px">${esc(t("noLed"))}</td></tr>`) +
-    `<tr class="last"><td colspan="2">${esc(t("ledEnd"))} ${esc(side(L.end))}</td><td class="hn"></td><td class="num r">${fmt(D)}</td><td class="num r">${fmt(C)}</td>
-      <td class="num r">${fmt(Math.abs(L.end))}</td></tr></tbody></table></div>`;
+    `<tr class="last"><td colspan="2">${esc(t("ledEnd"))} ${esc(ledSide(L.end))}</td><td class="hn"></td><td class="num r">${fmt(D)}</td><td class="num r">${fmt(C)}</td>
+      <td class="num r">${fmt(L.end)}</td></tr></tbody></table></div>`;
 }
 /* ---- نموذج الكشف (مشترك بين PDF و Excel) ---- */
 function stModel(){
@@ -1205,12 +1239,9 @@ function stModel(){
   const vexp = m.vat && m.vatExp && m.vatExp < today;
   const vat = !m.vat ? t("stVatNo") : vexp ? t("stVatEx", m.vatExp) : m.vatExp ? t("stVatTo", m.vatExp) : t("stVatY");
   const no = `ST-${m.code}-${today.replace(/-/g, "")}`;
-  const rows = L.rows.map((r, i) => ({
-    n: i + 1, date: r.date, kind: t(r.kind), used: r.info || 0, ref: r.ref || "",
-    dr: r.dr, cr: r.cr, bal: r.bal, inc: r.inc
-  }));
-  const side = v => v > 0.004 ? t("owes") : v < -0.004 ? t("owed") : "";
-  return {m, today, period, vat, no, D, C, opening: L.opening, end: L.end, endSide: side(L.end), rows, incLeft: L.inc.left, incIn: L.inc.in, incUsed: L.inc.used};
+  const rows = L.rows.map(r => ({date:r.date, type:t(r.kind), kind:r.kind, ref:r.ref, dr:r.dr, cr:r.cr, bal:r.bal, note:rowNote(r)}));
+  return {m, today, period, vat, no, D, C, opening:L.opening, end:L.end, endSide:ledSide(L.end), rows,
+          incLeft:L.inc.left, incIn:L.inc.in, incUsed:L.inc.used, cats:L.cats.map(([k, d, c]) => [t(k === "kInc" ? "stIncCat" : k), d, c])};
 }
 function stHtml(S){
   const f = v => fmt(v), dash = "—", dz = v => esc(v).replace(/(\d{4}-\d{2}-\d{2})/g, '<bdi class="num">$1</bdi>');
@@ -1219,35 +1250,32 @@ function stHtml(S){
     <div class="st-brand"><div class="st-logo">RMG</div><div><b>${esc(t("coName"))}</b><span>${esc(t("coSub"))}</span></div></div>
     <div class="st-title"><h1>${esc(t("ledTitle"))}</h1><span>${esc(t("stNo"))}: <span class="num">${esc(S.no)}</span></span></div>
   </div>
-  <div class="st-info">
-    <div><span>${esc(t("stMer"))}</span><b>${esc(S.m.name)}</b></div>
-    <div><span>${esc(t("stCode"))}</span><b class="num">${esc(S.m.code)}</b></div>
-    <div><span>${esc(t("stRegion"))}</span><b>${esc(S.m.region || dash)}</b></div>
-    <div><span>${esc(t("stPeriod"))}</span><b>${dz(S.period)}</b></div>
-    <div><span>${esc(t("stIssued"))}</span><b class="num">${esc(S.today)}</b></div>
-    <div><span>${esc(t("stVat"))}</span><b>${dz(S.vat)}</b></div>
-  </div>
-  <div class="st-sum">
-    <div><span>${esc(t("openBal"))}</span><b class="num">${f(S.opening)}</b></div>
-    <div><span>${esc(t("stTotDr"))}</span><b class="num" style="color:#b3261e">${f(S.D)}</b></div>
-    <div><span>${esc(t("stTotCr"))}</span><b class="num" style="color:#1e7b45">${f(S.C)}</b></div>
-    <div class="end"><span>${esc(t("ledEnd"))}</span><b class="num">${f(Math.abs(S.end))}</b><small>${esc(S.endSide)}</small></div>
-    <div><span>${esc(t("stIncBal"))}</span><b class="num" style="color:#8a6d00">${f(S.incLeft)}</b></div>
-  </div>
-  <table><thead><tr><th>#</th><th>${esc(t("date"))}</th><th>${esc(t("desc"))}</th><th>${esc(t("ref"))}</th>
-    <th class="r">${esc(t("debit"))}</th><th class="r">${esc(t("credit"))}</th><th class="r">${esc(t("balance"))}</th><th class="r">${esc(t("stIncBal"))}</th></tr></thead>
+  <div class="st-mer"><b>${esc(S.m.name)}</b> <span class="num">(${esc(S.m.code)})</span>
+    <span>${esc(t("stRegion"))}: ${esc(S.m.region || dash)}</span><span>${esc(t("stPeriod"))}: ${dz(S.period)}</span>
+    <span>${esc(t("stIssued"))}: <bdi class="num">${esc(S.today)}</bdi></span><span>${esc(t("stVat"))}: ${dz(S.vat)}</span></div>
+  <table><thead><tr><th>${esc(t("colType"))}</th><th>${esc(t("colDoc"))}</th><th>${esc(t("date"))}</th>
+    <th class="r">${esc(t("debit"))}</th><th class="r">${esc(t("credit"))}</th><th class="r">${esc(t("balance"))}</th><th>${esc(t("colNote"))}</th></tr></thead>
   <tbody>
-    <tr class="open"><td></td><td></td><td colspan="2">${esc(t("openBal"))}</td><td></td><td></td><td class="r num">${f(S.opening)}</td><td></td></tr>
-    ${S.rows.map(r => `<tr><td class="mut num">${r.n}</td><td class="num">${esc(r.date)}</td>
-      <td>${esc(r.kind)}${r.used ? `<small class="num">${f(r.used)}</small>` : ""}</td><td>${esc(r.ref)}</td>
+    <tr class="open"><td>${esc(t("openBal"))}</td><td class="mut">-</td><td></td><td></td><td></td><td class="r num">${f(S.opening)}</td><td></td></tr>
+    ${S.rows.map(r => `<tr${r.kind === "kUsed" ? ' class="used"' : ""}><td>${esc(r.type)}</td><td class="num">${esc(r.ref || "")}</td><td class="num">${esc(r.date)}</td>
       <td class="r num ${r.dr ? "dr" : "mut"}">${r.dr ? f(r.dr) : dash}</td>
       <td class="r num ${r.cr ? "cr" : "mut"}">${r.cr ? f(r.cr) : dash}</td>
-      <td class="r num"><b>${f(r.bal)}</b></td>
-      <td class="r num ${r.inc !== null ? "ibal" : "mut"}">${r.inc !== null ? f(r.inc) : ""}</td></tr>`).join("")}
-    ${S.rows.length ? "" : `<tr><td colspan="8" style="text-align:center;padding:14px;color:#888">${esc(t("stNone"))}</td></tr>`}
-    <tr class="tot"><td></td><td></td><td colspan="2">${esc(t("stTotal"))}</td><td class="r num">${f(S.D)}</td><td class="r num">${f(S.C)}</td>
-      <td class="r num">${f(Math.abs(S.end))} ${esc(S.endSide)}</td><td class="r num">${f(S.incLeft)}</td></tr>
+      <td class="r num${r.bal < -0.004 ? " neg" : ""}"><b>${f(r.bal)}</b></td>
+      <td class="nt">${esc(r.note)}</td></tr>`).join("")}
+    ${S.rows.length ? "" : `<tr><td colspan="7" style="text-align:center;padding:14px;color:#888">${esc(t("stNone"))}</td></tr>`}
+    <tr class="tot"><td colspan="3">${esc(t("stTotal"))}</td><td class="r num">${f(S.D)}</td><td class="r num">${f(S.C)}</td>
+      <td class="r num">${f(S.end)}</td><td>${esc(S.endSide)}</td></tr>
   </tbody></table>
+  <div class="st-low">
+    <table class="st-cat"><thead><tr><th>${esc(t("stItem"))}</th><th class="r">${esc(t("debit"))}</th><th class="r">${esc(t("credit"))}</th></tr></thead><tbody>
+      ${S.cats.map(([k, d, c]) => `<tr><td>${esc(k)}</td><td class="r num ${d ? "dr" : "mut"}">${d ? f(d) : dash}</td><td class="r num ${c ? "cr" : "mut"}">${c ? f(c) : dash}</td></tr>`).join("")}
+      <tr class="tot"><td>${esc(t("stTotal"))}</td><td class="r num">${f(S.D)}</td><td class="r num">${f(S.C)}</td></tr></tbody></table>
+    <div class="st-box">
+      <div><span>${esc(t("openBal"))}</span><b class="num">${f(S.opening)}</b></div>
+      <div class="end"><span>${esc(t("ledEnd"))}</span><b class="num">${f(Math.abs(S.end))}</b><small>${esc(S.endSide)}</small></div>
+      <div><span>${esc(t("incBox"))}</span><b class="num" style="color:#8a6d00">${f(S.incLeft)}</b><small>${esc(t("incIn"))} ${f(S.incIn)} — ${esc(t("kUsed"))} ${f(S.incUsed)}</small></div>
+    </div>
+  </div>
   <div class="st-notes"><b>${esc(t("stNotes"))}</b><p>• ${esc(t("stN1"))}</p><p>• ${esc(t("stN2"))}</p><p>• ${esc(t("stN3"))}</p></div>
   <div class="st-sig"><div>${esc(t("stSig1"))}</div><div>${esc(t("stSig2"))}</div><div>${esc(t("stSig3"))}</div></div>
   <div class="st-foot"><span>${esc(t("stFoot"))}</span><span class="num">${esc(S.no)}</span></div>
@@ -1266,7 +1294,7 @@ $("ledPdf").onclick = () => {
   setTimeout(done, 60000);
 };
 
-/* ---- Excel منسّق (ExcelJS بيتحمل وقت الحاجة بس) ---- */
+/* ---- Excel بنفس شكل كشف B-TECH (ExcelJS بيتحمل وقت الحاجة بس) ---- */
 let xlLib = null;
 function loadExcelJS(){
   if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
@@ -1280,103 +1308,95 @@ function loadExcelJS(){
 async function stXlsx(S){
   const X = await loadExcelJS();
   const wb = new X.Workbook(); wb.creator = "RMG International"; wb.created = new Date();
-  const rtl = lang === "ar";
-  const ws = wb.addWorksheet(lang === "ar" ? "كشف حساب" : "Statement", {
-    views: [{rightToLeft: rtl, showGridLines: false, state: "frozen", ySplit: 11}],
+  const rtl = lang === "ar", F = "Arial", INK = "FF1D1D1F", MUTE = "FF6B6B6B", DARK = "FF26292E", YEL = "FFFFC915", LINE = "FFD9D9D9";
+  const HEAD_ROW = 6;
+  const ws = wb.addWorksheet(rtl ? "كشف حساب" : "Statement", {
+    views: [{rightToLeft: rtl, showGridLines: false, state: "frozen", ySplit: HEAD_ROW}],
     pageSetup: {paperSize: 9, orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0,
-                margins: {left: .4, right: .4, top: .5, bottom: .6, header: .2, footer: .25}, printTitlesRow: "11:11"},
+                margins: {left: .35, right: .35, top: .45, bottom: .6, header: .2, footer: .25}, printTitlesRow: `${HEAD_ROW}:${HEAD_ROW}`},
     headerFooter: {oddFooter: `&L&8${S.no}&C&8&P / &N&R&8${t("stFoot")}`}
   });
-  const F = "Arial", INK = "FF1D1D1F", MUTE = "FF6B6B6B", YEL = "FFFFC915", DARK = "FF26292E", LINE = "FFD9D9D9";
-  const NUM = '#,##0.00;-#,##0.00;"—"', BAL = "#,##0.00;-#,##0.00;0.00";
-  ws.columns = [{width: 5}, {width: 12}, {width: 22}, {width: 28}, {width: 15}, {width: 15}, {width: 16}, {width: 15}];
-  const thin = {style: "thin", color: {argb: LINE}};
-  const box = {top: thin, bottom: thin, left: thin, right: thin};
-  const put = (addr, v, st = {}) => { const c = ws.getCell(addr); c.value = v; Object.assign(c, st); return c; };
+  ws.columns = [{width: 18}, {width: 22}, {width: 12}, {width: 16}, {width: 16}, {width: 17}, {width: 40}];
+  const thin = {style: "thin", color: {argb: LINE}}, hair = {style: "hair", color: {argb: "FFDDDDDD"}};
   const al = (h = rtl ? "right" : "left", v = "middle", wrap = false) => ({horizontal: h, vertical: v, wrapText: wrap, readingOrder: rtl ? "rtl" : "ltr"});
+  const fill = c => ({type: "pattern", pattern: "solid", fgColor: {argb: c}});
+  const NUM = '#,##0.00;-#,##0.00;"—"', BAL = '#,##0.00;[Red]-#,##0.00;0.00';
+  const toDate = d => { const [y, mo, da] = String(d).split("-").map(Number); return y ? new Date(Date.UTC(y, mo - 1, da)) : d; };
 
-  // 1-2 ترويسة
-  ws.mergeCells("A1:D1"); ws.mergeCells("E1:H1"); ws.mergeCells("A2:D2"); ws.mergeCells("E2:H2");
-  put("A1", t("coName"), {font: {name: F, size: 15, bold: true, color: {argb: INK}}, alignment: al()});
-  put("A2", t("coSub"), {font: {name: F, size: 9, color: {argb: MUTE}}, alignment: al()});
-  put("E1", t("ledTitle"), {font: {name: F, size: 16, bold: true, color: {argb: INK}}, alignment: al(rtl ? "left" : "right")});
-  put("E2", `${t("stNo")}: ${S.no}`, {font: {name: F, size: 9, color: {argb: MUTE}}, alignment: al(rtl ? "left" : "right")});
-  ws.getRow(1).height = 26; ws.getRow(2).height = 16;
-  for (let c = 1; c <= 8; c++) ws.getCell(3, c).fill = {type: "pattern", pattern: "solid", fgColor: {argb: YEL}};
-  ws.getRow(3).height = 4;
+  // 1: الشركة | 2: التاجر (زي B-TECH: الاسم والكود في سطر واحد) | 3: بيانات | 4: شريط أصفر
+  ws.mergeCells("A1:D1"); ws.mergeCells("E1:G1");
+  Object.assign(ws.getCell("A1"), {value: t("coName"), font: {name: F, size: 13, bold: true, color: {argb: INK}}, alignment: al()});
+  Object.assign(ws.getCell("E1"), {value: `${t("ledTitle")}  |  ${S.no}`, font: {name: F, size: 10, color: {argb: MUTE}}, alignment: al(rtl ? "left" : "right")});
+  ws.mergeCells("A2:G2");
+  Object.assign(ws.getCell("A2"), {value: `${S.m.name} (${S.m.code})`, font: {name: F, size: 15, bold: true, color: {argb: INK}}, alignment: al("center")});
+  ws.getRow(2).height = 26;
+  ws.mergeCells("A3:G3");
+  Object.assign(ws.getCell("A3"), {value: `${t("stRegion")}: ${S.m.region || "—"}     ${t("stPeriod")}: ${S.period}     ${t("stIssued")}: ${S.today}     ${t("stVat")}: ${S.vat}`,
+    font: {name: F, size: 9, color: {argb: MUTE}}, alignment: al("center")});
+  for (let c = 1; c <= 7; c++) ws.getCell(4, c).fill = fill(YEL);
+  ws.getRow(4).height = 4;
 
-  // 5-6 بيانات التاجر (3 خانات × صفين)
-  const info = [[t("stMer"), S.m.name], [t("stCode"), S.m.code], [t("stRegion"), S.m.region || "—"],
-                [t("stPeriod"), S.period], [t("stIssued"), S.today], [t("stVat"), S.vat]];
-  const spans = [["A", "C"], ["D", "E"], ["F", "H"]];
-  info.forEach(([k, v], i) => {
-    const r = 5 + Math.floor(i / 3), [c1, c2] = spans[i % 3];
-    ws.mergeCells(`${c1}${r}:${c2}${r}`);
-    const c = put(`${c1}${r}`, {richText: [{text: k + "\n", font: {name: F, size: 8, color: {argb: MUTE}}},
-                                          {text: String(v), font: {name: F, size: 10.5, bold: true, color: {argb: INK}}}]},
-                  {alignment: al(undefined, "middle", true)});
-    for (let cc = ws.getColumn(c1).number; cc <= ws.getColumn(c2).number; cc++) ws.getCell(r, cc).border = box;
-  });
-  ws.getRow(5).height = 32; ws.getRow(6).height = 32;
+  // رأس الجدول
+  const hr = ws.getRow(HEAD_ROW);
+  hr.values = [t("colType"), t("colDoc"), t("date"), t("debit"), t("credit"), t("balance"), t("colNote")]; hr.height = 22;
+  hr.eachCell((c, i) => { c.font = {name: F, size: 10, bold: true, color: {argb: "FFFFFFFF"}}; c.fill = fill(DARK);
+    c.alignment = al(i >= 4 && i <= 6 ? "center" : undefined); c.border = {top: thin, bottom: thin, left: thin, right: thin}; });
 
-  // 8-9 الملخص
-  const sum = [[t("openBal"), S.opening, INK], [t("stTotDr"), S.D, "FFB3261E"], [t("stTotCr"), S.C, "FF1E7B45"],
-               [`${t("ledEnd")} (${S.endSide || "—"})`, Math.abs(S.end), INK], [t("stIncBal"), S.incLeft, "FF8A6D00"]];
-  const sc = [["A", "B"], ["C", "C"], ["D", "D"], ["E", "F"], ["G", "H"]];
-  sum.forEach(([k, v, col], i) => {
-    const [c1, c2] = sc[i];
-    if (c1 !== c2){ ws.mergeCells(`${c1}8:${c2}8`); ws.mergeCells(`${c1}9:${c2}9`); }
-    put(`${c1}8`, k, {font: {name: F, size: 8, color: {argb: MUTE}}, alignment: al(undefined, "bottom")});
-    put(`${c1}9`, v, {font: {name: F, size: 12, bold: true, color: {argb: col}}, numFmt: "#,##0.00", alignment: al(undefined, "top")});
-    for (let cc = ws.getColumn(c1).number; cc <= ws.getColumn(c2).number; cc++){
-      ws.getCell(8, cc).border = {top: thin, left: thin, right: thin}; ws.getCell(9, cc).border = {bottom: thin, left: thin, right: thin};
-      if (i === 3){ ws.getCell(8, cc).fill = ws.getCell(9, cc).fill = {type: "pattern", pattern: "solid", fgColor: {argb: "FFFFF4CC"}}; }
-    }
-  });
-  ws.getRow(8).height = 16; ws.getRow(9).height = 22;
-
-  // 11 رأس الجدول
-  const head = ["#", t("date"), t("desc"), t("ref"), t("debit"), t("credit"), t("balance"), t("stIncBal")];
-  const hr = ws.getRow(11); hr.values = head; hr.height = 22;
-  hr.eachCell((c, i) => { c.font = {name: F, size: 9.5, bold: true, color: {argb: "FFFFFFFF"}};
-    c.fill = {type: "pattern", pattern: "solid", fgColor: {argb: DARK}}; c.alignment = al(i >= 5 ? "center" : undefined); });
-
-  // رصيد أول الفترة
-  let r = 12;
-  const openRow = ws.getRow(r); openRow.values = ["", "", t("openBal"), "", null, null, S.opening, null];
-  openRow.eachCell({includeEmpty: true}, (c, i) => { c.fill = {type: "pattern", pattern: "solid", fgColor: {argb: "FFF2F2F2"}};
-    c.font = {name: F, size: 9.5, bold: true, color: {argb: INK}}; c.border = {bottom: thin}; c.alignment = al(); if (i >= 5) c.numFmt = i === 7 ? BAL : NUM; });
+  let r = HEAD_ROW + 1;
+  const o = ws.getRow(r);
+  o.values = [t("openBal"), "-", null, null, null, S.opening, null];
+  o.eachCell({includeEmpty: true}, (c, i) => { c.font = {name: F, size: 10, bold: true, color: {argb: INK}}; c.fill = fill("FFF2F2F2");
+    c.border = {bottom: thin}; c.alignment = al(i === 2 ? "center" : undefined); if (i >= 4 && i <= 6) c.numFmt = BAL; });
   const first = r + 1;
   for (const x of S.rows){
     r++;
     const row = ws.getRow(r);
-    row.values = [x.n, x.date, x.used ? `${x.kind} (${fmt(x.used)})` : x.kind, x.ref, x.dr || 0, x.cr || 0, x.bal, x.inc];
+    row.values = [x.type, x.ref || "", toDate(x.date), x.dr || null, x.cr || null, {formula: `F${r-1}-D${r}+E${r}`, result: x.bal}, x.note || ""];
+    const used = x.kind === "kUsed";
     row.eachCell({includeEmpty: true}, (c, i) => {
-      c.font = {name: F, size: 9.5, color: {argb: i === 1 ? "FF9A9A9A" : i === 5 && x.dr ? "FFB3261E" : i === 6 && x.cr ? "FF1E7B45" : i === 8 ? "FF8A6D00" : INK}, bold: i === 7};
-      c.border = {bottom: {style: "hair", color: {argb: "FFDDDDDD"}}};
-      c.alignment = al(i === 1 ? "center" : undefined, "middle", i === 4);
-      if (i >= 5) c.numFmt = i === 7 ? BAL : NUM;
-      if (x.n % 2 === 0) c.fill = {type: "pattern", pattern: "solid", fgColor: {argb: "FFFAFAFA"}};
+      c.font = {name: F, size: 10, color: {argb: used ? "FF8A8A8A" : i === 4 ? "FFB3261E" : i === 5 ? "FF1E7B45" : i === 7 ? "FF555555" : INK}, bold: i === 6, italic: used && i === 1};
+      c.border = {bottom: hair}; c.alignment = al(i === 3 ? "center" : undefined, "middle", i === 7);
+      if (i === 3) c.numFmt = "yyyy-mm-dd";
+      if (i === 4 || i === 5) c.numFmt = NUM;
+      if (i === 6) c.numFmt = BAL;
+      if ((r - first) % 2 === 1) c.fill = fill("FFFAFAFA");
     });
   }
-  // الإجمالي
   r++;
   const tr = ws.getRow(r);
-  tr.values = ["", "", t("stTotal"), S.endSide, S.rows.length ? {formula: `SUM(E${first}:E${r-1})`, result: S.D} : 0,
-               S.rows.length ? {formula: `SUM(F${first}:F${r-1})`, result: S.C} : 0, Math.abs(S.end), S.incLeft];
+  tr.values = [t("stTotal"), "", "", S.rows.length ? {formula: `SUM(D${first}:D${r-1})`, result: S.D} : 0,
+               S.rows.length ? {formula: `SUM(E${first}:E${r-1})`, result: S.C} : 0, {formula: `F${r-1}`, result: S.end}, S.endSide];
   tr.height = 22;
-  tr.eachCell({includeEmpty: true}, (c, i) => { c.font = {name: F, size: 10, bold: true, color: {argb: "FFFFFFFF"}};
-    c.fill = {type: "pattern", pattern: "solid", fgColor: {argb: DARK}}; c.alignment = al(); if (i >= 5) c.numFmt = "#,##0.00"; });
+  tr.eachCell({includeEmpty: true}, (c, i) => { c.font = {name: F, size: 10.5, bold: true, color: {argb: "FFFFFFFF"}}; c.fill = fill(DARK);
+    c.alignment = al(); if (i >= 4 && i <= 6) c.numFmt = "#,##0.00;-#,##0.00;0.00"; });
+
+  // ملخص زي Sheet2 بتاع B-TECH
+  r += 2;
+  const sh = ws.getRow(r); sh.values = [t("stItem"), "", "", t("debit"), t("credit")];
+  ws.mergeCells(`A${r}:C${r}`);
+  sh.eachCell((c, i) => { c.font = {name: F, size: 9.5, bold: true, color: {argb: INK}}; c.fill = fill("FFF2F2F2"); c.border = {bottom: thin}; c.alignment = al(i >= 4 ? "center" : undefined); });
+  for (const [k, d, c] of S.cats){
+    r++; ws.mergeCells(`A${r}:C${r}`);
+    const row = ws.getRow(r); row.values = [k, "", "", d || null, c || null];
+    row.eachCell({includeEmpty: true}, (cell, i) => { if (i > 5) return; cell.font = {name: F, size: 9.5, color: {argb: i === 4 ? "FFB3261E" : i === 5 ? "FF1E7B45" : INK}};
+      cell.border = {bottom: hair}; cell.alignment = al(); if (i >= 4) cell.numFmt = NUM; });
+  }
+  r++; ws.mergeCells(`A${r}:C${r}`);
+  const sr = ws.getRow(r); sr.values = [`${t("ledEnd")} (${S.endSide || "—"})`, "", "", null, null, S.end];
+  sr.eachCell({includeEmpty: true}, (c, i) => { if (i > 6) return; c.font = {name: F, size: 10.5, bold: true, color: {argb: INK}}; c.fill = fill("FFFFF4CC"); c.alignment = al(); if (i === 6) c.numFmt = BAL; });
+  r++; ws.mergeCells(`A${r}:C${r}`);
+  const ir = ws.getRow(r); ir.values = [t("incBox"), "", "", null, null, S.incLeft, `${t("incIn")} ${fmt(S.incIn)} — ${t("kUsed")} ${fmt(S.incUsed)}`];
+  ir.eachCell({includeEmpty: true}, (c, i) => { c.font = {name: F, size: 9.5, bold: i <= 6, color: {argb: i === 6 ? "FF8A6D00" : i === 7 ? MUTE : INK}}; c.alignment = al(); if (i === 6) c.numFmt = "#,##0.00"; });
 
   // ملاحظات + توقيعات
   r += 2;
-  put(`A${r}`, t("stNotes"), {font: {name: F, size: 9.5, bold: true, color: {argb: INK}}, alignment: al()});
-  for (const k of ["stN1", "stN2", "stN3"]){ r++; ws.mergeCells(`A${r}:H${r}`);
-    put(`A${r}`, "• " + t(k), {font: {name: F, size: 8.5, color: {argb: "FF555555"}}, alignment: al(undefined, "top", true)}); ws.getRow(r).height = 24; }
+  Object.assign(ws.getCell(`A${r}`), {value: t("stNotes"), font: {name: F, size: 9.5, bold: true, color: {argb: INK}}, alignment: al()});
+  for (const k of ["stN1", "stN2", "stN3"]){ r++; ws.mergeCells(`A${r}:G${r}`);
+    Object.assign(ws.getCell(`A${r}`), {value: "• " + t(k), font: {name: F, size: 8.5, color: {argb: "FF555555"}}, alignment: al(undefined, "top", true)}); ws.getRow(r).height = 18; }
   r += 3;
-  [["A", "C", "stSig1"], ["D", "E", "stSig2"], ["F", "H", "stSig3"]].forEach(([a1, a2, k]) => {
+  [["A", "B", "stSig1"], ["C", "E", "stSig2"], ["F", "G", "stSig3"]].forEach(([a1, a2, k]) => {
     ws.mergeCells(`${a1}${r}:${a2}${r}`);
-    put(`${a1}${r}`, t(k), {font: {name: F, size: 9, color: {argb: "FF555555"}}, alignment: {horizontal: "center", vertical: "top"}});
+    Object.assign(ws.getCell(`${a1}${r}`), {value: t(k), font: {name: F, size: 9, color: {argb: "FF555555"}}, alignment: {horizontal: "center", vertical: "top"}});
     for (let cc = ws.getColumn(a1).number; cc <= ws.getColumn(a2).number; cc++) ws.getCell(r, cc).border = {top: {style: "thin", color: {argb: "FF999999"}}};
   });
   ws.getRow(r).height = 30;

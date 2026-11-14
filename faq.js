@@ -267,12 +267,16 @@ The coding form is under "📄 Templates to download" on the main page.`,
     keys: "كشف حساب دائن مدين تفصيلي مديونيه مديونية عليه له تحصيل statement debit credit ledger owes",
     top: true,
     a_ar: `ادخل على المحل ← تاب «كشف حساب تفصيلي» ← اختار الفترة.
-مدين (على التاجر) = الأوردرات.  دائن (للتاجر) = المرتجعات + التحصيلات + إيداعات البنك + الحوافز المستخدمة.
-الحافز لما ينزل بيزوّد «رصيد الحوافز» بس، ولما يتستخدم بيتخصم من رصيد الحوافز ومن اللي على التاجر (مثلاً نزل 100 ألف واستخدم 10 آلاف في أوردر ← رصيد الحوافز 90 ألف، واللي على التاجر قلّ 10 آلاف). وفوق الجدول ملخص: نزل كام / اتستخدم كام / باقي كام.
+الأعمدة: نوع الحركة — رقم المستند — التاريخ — مدين — دائن — الرصيد — ملاحظات.
+مدين = الأوردرات.  دائن = المرتجعات + التحصيلات + إيداعات البنك + فواتير الحوافز (الحافز دائن أول ما ينزل).
+الرصيد = دائن − مدين، ولو بالسالب يبقى على التاجر.
+«حافز مستخدم» سطر للبيان بس (مابيغيّرش الرصيد عشان الحافز اتحسب لما نزل)، وبيبيّن رصيد الحوافز اللي باقي.
 تحت: «طباعة / حفظ PDF» أو «تحميل Excel» وابعته للتاجر.`,
     a_en: `Open the store → "Detailed statement" tab → choose the period.
-Debit (owed by merchant) = orders. Credit (in merchant's favour) = returns + collections + bank deposits + used incentives.
-Granted incentives only add to the incentive balance; when used, they come off that balance and off what the merchant owes (e.g. 100k granted, 10k used → 90k left and the merchant owes 10k less). A summary shows granted / used / remaining.
+Columns: transaction type — document no. — date — debit — credit — balance — note.
+Debit = orders. Credit = returns + collections + bank deposits + incentive invoices (an incentive is credited when issued).
+Balance = credit − debit; a negative balance is owed by the merchant.
+"Incentive used" lines are for reference only and show the remaining incentive balance.
 Use "Print / save PDF" or "Download Excel" and send it to the merchant.`,
   },
 ];
@@ -350,9 +354,9 @@ Pick all time / this month / a date range at the top. The yellow last row is the
 Bank balance = deposits + from incentive − orders.` },
   { target: "#pled", go: "store", tab: "led",
     t_ar: "كشف حساب تفصيلي", t_en: "Detailed statement",
-    a_ar: `كشف حساب تفصيلي للتاجر: الأوردرات (مدين) قصاد المرتجعات والتحصيلات وإيداعات البنك والحوافز المستخدمة (دائن)، وعمود «رصيد الحوافز» بيوضح الحوافز اللي نزلت واللي اتبقت.
+    a_ar: `كشف حساب تفصيلي للتاجر: الأوردرات (مدين) قصاد المرتجعات والتحصيلات وإيداعات البنك وفواتير الحوافز (دائن). الرصيد بالسالب يبقى على التاجر.
 اختار الفترة، وبعدين «طباعة / حفظ PDF» أو «تحميل Excel» وابعته للتاجر.`,
-    a_en: `A detailed statement: orders (debit) against returns, collections, bank deposits and used incentives (credit), with an incentive-balance column.
+    a_en: `A detailed statement: orders (debit) against returns, collections, bank deposits and incentive invoices (credit). A negative balance is owed by the merchant.
 Pick the period, then "Print / save PDF" or "Download Excel" to send to the merchant.` },
   { target: "#pdoc", go: "store", tab: "doc",
     t_ar: "ورق التاجر", t_en: "Store documents",
