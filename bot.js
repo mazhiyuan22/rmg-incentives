@@ -76,6 +76,14 @@
     paperN: ["المحلات اللي عليها مشكلة ورق ({0}):", "Stores with a paperwork issue ({0}):"],
     total: ["عندك {0} محل — إجمالي الرصيد المتاح {1}، والمستخدم {2}.", "You have {0} stores: total available {1}, total used {2}."],
     more: ["أسئلة تانية:", "Other questions:"],
+    whichStore: ["لأنهي محل؟ اكتب الكود أو الاسم — أو اكتب «كل المحلات».", "Which store? Type its code or name, or \"all stores\"."],
+    whichPeriod: ["عايز الأوردرات لأنهي يوم ولا أنهي شهر؟ (مثلًا: النهارده، 15/11، نوفمبر، الشهر اللي فات)", "Which day or month? (e.g. today, 15/11, November, last month)"],
+    badPeriod: ["مش فاهم التاريخ 🤔 اكتب يوم زي 15/11 أو شهر زي نوفمبر، أو اختار من تحت.", "I couldn't read that date 🤔 Type a day like 15/11 or a month like November, or pick below."],
+    today: ["النهارده", "Today"], yday: ["امبارح", "Yesterday"], thisM: ["الشهر ده", "This month"], lastM: ["الشهر اللي فات", "Last month"], allT: ["كل الفترات", "All time"],
+    ordOf: ["أوردرات {0} — {1}", "Orders for {0}: {1}"], allStores: ["كل محلاتك", "all your stores"],
+    nOrd: ["أوردرات", "Orders"], nRet: ["مرتجعات", "Returns"], net: ["الصافي", "Net"], pcs: ["قطعة", "pcs"],
+    noOrd: ["مفيش أوردرات ولا مرتجعات في الفترة دي.", "No orders or returns in this period."],
+    incOf: ["حوافز {0}", "Incentives for {0}"], opening: ["بواقي", "Carried over"], incN: ["حوافز", "Incentives"],
     tour: ["📘 شرح الصفحة خطوة بخطوة", "📘 Step-by-step tour"], next: ["التالي", "Next"], prev: ["السابق", "Back"],
     end: ["إنهاء", "Finish"], step: ["خطوة {0} من {1}", "Step {0} of {1}"],
     tourLogin: ["ادخل الأول، وبعدين اضغط «📘 شرح الصفحة» وأنا أشرحلك كل جزء.", "Sign in first, then tap \"📘 Step-by-step tour\" and I'll show you every part."],
@@ -162,6 +170,8 @@
 
   // ---------- فهم السؤال
   const STOP = new Set(["رصيد", "محل", "المحل", "كام", "بكام", "ايه", "عايز", "اعرف", "كشف", "حساب", "بتاع", "بتاعه", "لمحل", "في",
+    "حوافز", "حافز", "اوردرات", "اوردر", "أوردرات", "أوردر", "مرتجعات", "مرتجع", "صافي", "عمل", "عامل", "عملت", "شهر", "يوم", "النهارده",
+    "امبارح", "الشهر", "ده", "اللي", "فات", "كل", "عند", "محلات", "orders", "order", "net", "returns", "incentives", "month", "today",
     "balance", "store", "shop", "of", "the", "what", "is", "how", "much", "for", "show", "me"].map(N));
 
   function findStores(q) {
@@ -171,7 +181,9 @@
       if (c.length >= 3 && nq.includes(c)) out.push(m);
     }
     if (out.length) return out;
-    const ws = W(q).filter(w => w.length >= 2 && !STOP.has(w));
+    const MN = new Set(["يناير","فبراير","مارس","ابريل","مايو","يونيو","يوليو","اغسطس","سبتمبر","اكتوبر","نوفمبر","ديسمبر",
+      "january","february","march","april","may","june","july","august","september","october","november","december"].map(N));
+    const ws = W(q).filter(w => w.length >= 2 && !STOP.has(w) && !MN.has(w) && !/^\d{1,4}$/.test(w));
     if (!ws.length) return [];
     return data.ms.filter(m => { const h = N(`${m.name} ${m.region}`); return ws.every(w => h.includes(w)); });
   }
@@ -195,6 +207,117 @@
     }
     return top ? best : null;
   }
+  // ---------- التواريخ (يوم / شهر)
+  const MONTHS = [["يناير","jan"],["فبراير","feb"],["مارس","mar"],["ابريل","أبريل","apr"],["مايو","may"],["يونيو","jun"],
+                  ["يوليو","jul"],["اغسطس","أغسطس","aug"],["سبتمبر","sep"],["اكتوبر","أكتوبر","oct"],["نوفمبر","nov"],["ديسمبر","dec"]];
+  const iso = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const monthRange = (y, m) => [iso(new Date(y, m, 1)), iso(new Date(y, m + 1, 0)), `${y}-${String(m + 1).padStart(2, "0")}`];
+  function parsePeriod(q0) {
+    const q = String(q0).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).toLowerCase();
+    const now = new Date(), y = now.getFullYear();
+    if (/كل الفترات|كل الوقت|all time|من الاول|من الأول/.test(q)) return ["0000-01-01", "9999-12-31", u("allT")];
+    if (/النهارده|النهاردة|اليوم|today/.test(q)) { const d = iso(now); return [d, d, d]; }
+    if (/امبارح|إمبارح|أمس|امس|yesterday/.test(q)) { const d = iso(new Date(now - 864e5)); return [d, d, d]; }
+    if (/الشهر ده|الشهر الحالي|this month/.test(q)) return monthRange(y, now.getMonth());
+    if (/الشهر اللي فات|الشهر الماضي|الشهر السابق|last month/.test(q)) return monthRange(y, now.getMonth() - 1);
+    let m = q.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) { const d = iso(new Date(+m[1], +m[2] - 1, +m[3])); return [d, d, d]; }
+    m = q.match(/(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?/);
+    if (m && +m[2] <= 12) {
+      const yy = m[3] ? (m[3].length === 2 ? 2000 + +m[3] : +m[3]) : y;
+      if (m[3] && +m[1] <= 12 && m[3].length === 4 && !q.match(/\d{1,2}[\/\-.]\d{1,2}[\/\-.]/)) return monthRange(+m[3], +m[1] - 1);
+      const d = iso(new Date(yy, +m[2] - 1, +m[1])); return [d, d, d];
+    }
+    m = q.match(/(\d{4})-(\d{1,2})(?!\d)/) || q.match(/(\d{1,2})[\/](\d{4})/);
+    if (m) { const [a, b] = m[1].length === 4 ? [+m[1], +m[2]] : [+m[2], +m[1]]; return monthRange(a, b - 1); }
+    for (let i = 0; i < 12; i++) if (MONTHS[i].some(n => q.includes(N(n)) || q.includes(n))) {
+      const ym = q.match(/(20\d{2})/); let yy = ym ? +ym[1] : y;
+      if (!ym && i > now.getMonth()) yy -= 1;                // «ديسمبر» في يناير = ديسمبر اللي فات
+      return monthRange(yy, i);
+    }
+    m = q.match(/شهر\s*(\d{1,2})|month\s*(\d{1,2})/);
+    if (m) { const mm = +(m[1] || m[2]); let yy = y; if (mm - 1 > now.getMonth()) yy -= 1; return monthRange(yy, mm - 1); }
+    return null;
+  }
+  function ordersSummary(ids, a, b) {
+    const set = new Set(ids), rows = extra.orders.filter(r => set.has(r.merchant_id) && r.date >= a && r.date <= b);
+    const o = rows.filter(r => r.kind !== "return"), rt = rows.filter(r => r.kind === "return");
+    const S = (xs, f) => xs.reduce((s, r) => s + Number(r[f] || 0), 0), nd = xs => new Set(xs.map(r => r.merchant_id + "|" + (r.doc_no || r.id))).size;
+    return {n: rows.length, no: nd(o), qo: S(o, "qty"), ao: S(o, "amount"), nr: nd(rt), qr: S(rt, "qty"), ar: S(rt, "amount")};
+  }
+  function sayOrders(stores, per) {
+    const [a, b, label] = per;
+    const all = stores === "all", list = all ? data.ms : stores;
+    const blocks = (all || list.length > 5 ? [{title: all ? u("allStores") : list.length + "", ids: list.map(m => m.id)}] :
+                    list.map(m => ({title: `${m.name} (${m.code})`, ids: [m.id], m})));
+    const html = blocks.map(bl => {
+      const x = ordersSummary(bl.ids, a, b);
+      if (!x.n) return `<span class="bstore"><span class="n">${E(bl.title)}</span><br>${E(u("noOrd"))}</span>`;
+      return `<span class="bstore"><span class="n">${E(bl.title)}</span>
+        <span class="r"><span>${E(u("nOrd"))} (${x.no}) — ${x.qo.toLocaleString("en-US")} ${E(u("pcs"))}</span><b class="num">${F(x.ao)}</b></span>
+        <span class="r"><span>${E(u("nRet"))} (${x.nr}) — ${x.qr.toLocaleString("en-US")} ${E(u("pcs"))}</span><span class="num">${F(x.ar)}</span></span>
+        <span class="r"><span><b>${E(u("net"))}</b></span><b class="num">${F(x.ao - x.ar)}</b></span>
+        ${bl.m ? `<button type="button" data-open="${bl.m.id}">${E(u("open"))}</button>` : ""}</span>`;
+    }).join("");
+    add("bot", E(u("ordOf", all ? u("allStores") : list.length === 1 ? list[0].name : list.length + "", label)) + html);
+  }
+  function sayIncentives(list) {
+    add("bot", list.map(m => `<span class="bstore"><span class="n">${E(m.name)}</span> <span class="num">${E(m.code)}</span>
+      <span class="r"><span>${E(u("opening"))}</span><span class="num">${F(m.op)}</span></span>
+      <span class="r"><span>${E(u("incN"))}</span><span class="num">${F(m.inc)}</span></span>
+      <span class="r"><span>${E(u("used"))}</span><span class="num">${F(m.used)}</span></span>
+      <span class="r"><span><b>${E(u("avail"))}</b></span><b class="num">${F(m.bal)}</b></span>
+      <button type="button" data-open="${m.id}">${E(u("open"))}</button></span>`).join(""));
+  }
+  function periodChips() {
+    const box = document.createElement("div"); box.className = "bchips";
+    ["today", "yday", "thisM", "lastM", "allT"].forEach(k => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = u(k);
+      b.onclick = () => { add("me", E(u(k))); answer(u(k)); };
+      box.appendChild(b);
+    });
+    msgs.appendChild(box); msgs.scrollTop = msgs.scrollHeight;
+  }
+  let pend = null;            // سؤال لسه مستني تكملة: {intent, stores, per}
+  function cont() {           // كمّل السؤال لما تتجمع البيانات
+    if (!pend.stores) { add("bot", E(u("whichStore"))); return; }
+    if (pend.intent === "orders" && !pend.per) { add("bot", E(u("whichPeriod"))); periodChips(); return; }
+    const p = pend; pend = null;
+    if (p.intent === "orders") return sayOrders(p.stores, p.per);
+    if (p.intent === "inc") return sayIncentives(p.stores === "all" ? data.ms.slice(0, 5) : p.stores);
+    return add("bot", (p.stores === "all" ? data.ms.slice(0, 5) : p.stores).map(storeCard).join(""));
+  }
+  function storesFrom(q) {
+    if (/كل المحلات|كل محلاتي|كلهم|all stores|all my stores/i.test(q)) return "all";
+    const st = findStores(q);
+    if (st.length && st.length <= 5) return st;
+    if (st.length > 5) { add("bot", E(u("found", st.length)) + st.slice(0, 8).map(m => `<br>• ${E(m.name)} — <span class="num">${E(m.code)}</span>`).join("")); return "many"; }
+    return null;
+  }
+  function dataAnswer(q) {
+    const intent = /اوردر|أوردر|اوردرات|أوردرات|طلبي|مرتجع|صافي|order|return|net/i.test(q) ? "orders" :
+                   /حافز|حوافز|incentive/i.test(q) ? "inc" : /رصيد|balance|كام/i.test(q) ? "bal" : null;
+    if (pend) {                                   // تكملة لسؤال قبله
+      if (!pend.stores) { const s2 = storesFrom(q); if (s2 === "many") return true; if (s2) { pend.stores = s2; cont(); return true; } }
+      else if (pend.intent === "orders" && !pend.per) {
+        const per = parsePeriod(q);
+        if (per) { pend.per = per; cont(); return true; }
+        if (!intent) { add("bot", E(u("badPeriod"))); periodChips(); return true; }
+      }
+      if (!intent) { pend = null; return false; }
+      pend = null;
+    }
+    const st = storesFrom(q);
+    if (st === "many") return true;
+    if (!intent) {
+      if (st && st !== "all") { add("bot", st.map(storeCard).join("")); return true; }
+      return false;
+    }
+    pend = {intent, stores: st || (data.ms.length === 1 ? [data.ms[0]] : null), per: intent === "orders" ? parsePeriod(q) : null};
+    if (!pend.stores && intent !== "orders" && !/محل|store|shop|عند|بتاع/.test(q) && W(q).every(w => STOP.has(w) || w.length < 2)) { pend = null; return false; }
+    cont(); return true;
+  }
+
   function answer(q) {
     const nq = N(q);
     if (/شرح|اشرح|علمني|تعليمات|جوله|tutorial|tour|guide|walkthrough/i.test(nq)) return startTour();
@@ -205,13 +328,11 @@
         if (!bad.length) return add("bot", E(u("paper0")));
         return add("bot", E(u("paperN", bad.length)) + bad.slice(0, 15).map(storeCard).join(""));
       }
-      if (/(اجمالي|إجمالي|مجموع|total|كل المحلات)/i.test(q) && !/\d{3,}/.test(q)) {
+      if (/(اجمالي|إجمالي|مجموع|total|كل المحلات)/i.test(q) && !/\d{3,}/.test(q) && !/اوردر|أوردر|مرتجع|صافي|حافز|حوافز|order|return|net|incentive/i.test(q)) {
         const b = data.ms.reduce((a, m) => a + m.bal, 0), us = data.ms.reduce((a, m) => a + m.used, 0);
         return add("bot", E(u("total", data.ms.length, F(b), F(us))));
       }
-      const st = findStores(q);
-      if (st.length && st.length <= 5) return add("bot", st.map(storeCard).join(""));
-      if (st.length > 5) return add("bot", E(u("found", st.length)) + st.slice(0, 8).map(m => `<br>• ${E(m.name)} — <span class="num">${E(m.code)}</span>`).join(""));
+      if (!/ازاي|إزاي|اكود|أكود|تكويد|ليه|امتى|إمتى|معاد|how|why|when/.test(q) && dataAnswer(q)) return;
       if (/رصيد|balance/i.test(q) && W(q).some(w => w.length >= 2 && !STOP.has(w))) return add("bot", E(u("nostore")));
     }
     const f = bestFaq(q);

@@ -227,6 +227,47 @@ a sales invoice of 100,000 − 20,000 = 80,000 is issued, with the 20,000 shown 
     a_ar: `لأ. هيترد له بس على الشهور والفواتير اللي رفعها على البورتال.`,
     a_en: `No. The refund only covers the months and invoices actually uploaded on the portal.`,
   },
+  // ---------------- التكويد والنماذج ----------------
+  {
+    q_ar: "إزاي أكوّد محل فرعي؟",
+    q_en: "How do I code a branch store?",
+    keys: "اكود تكويد كود محل فرعي فرع فروع رئيسي جديد branch code coding new store sub",
+    top: true,
+    a_ar: `1) الأول المحل الرئيسي لازم يتقفل حسابه:
+   • مايبقاش ليه رصيد في الحوافز ولا في البنك.
+   • ومايبقاش متعمل عليه أوردرات قريب.
+   ده عشان نقدر نصفّي حساب العميل ونقفله.
+2) بعد كده تجيب «ورقة تكويد محل فرع» مختومة من المحل الرئيسي ومن المحل الفرعي — بختمين مختلفين.
+ورقة التكويد موجودة في «📄 نماذج للتحميل» في الصفحة الرئيسية.`,
+    a_en: `1) First, the main store's account must be closed:
+   • No remaining incentive or bank balance.
+   • No recent orders on it.
+   This lets us settle and close the customer's account.
+2) Then bring the "branch store coding form" stamped by both the main store and the branch, with two different stamps.
+The coding form is under "📄 Templates to download" on the main page.`,
+  },
+  {
+    q_ar: "فين النماذج والورق اللي محتاجه (ورقة تكويد، عقد...)؟",
+    q_en: "Where are the forms I need (coding form, contract...)?",
+    keys: "نموذج نماذج تمبليت فورم ورقه ورق فاضي عقد تحميل نزل template form download blank contract",
+    login: true,
+    a_ar: `في الصفحة الرئيسية (قايمة المحلات) فيه زرار «📄 نماذج للتحميل» — فيه كل النماذج اللي الإدارة رفعتها، اضغط «تحميل».`,
+    a_en: `On the main page (store list) tap "📄 Templates to download". It has every form the admin team uploaded; tap "Download".`,
+  },
+  {
+    q_ar: "إزاي أطلع كشف حساب دائن ومدين للتاجر؟",
+    q_en: "How do I get a debit/credit statement for a merchant?",
+    keys: "كشف حساب دائن مدين تفصيلي مديونيه مديونية عليه له تحصيل statement debit credit ledger owes",
+    top: true,
+    a_ar: `ادخل على المحل ← تاب «دائن ومدين» ← اختار الفترة.
+مدين (على التاجر) = الأوردرات.  دائن (للتاجر) = المرتجعات + التحصيلات + إيداعات البنك + الحوافز الممنوحة.
+الحوافز المستخدمة بتنقص «رصيد الحوافز» (مثلاً نزل 100 ألف واستخدم 10 آلاف في أوردر ← رصيد الحوافز 90 ألف)، والأوردر نفسه متسجل مدين. وفوق الجدول ملخص: نزل كام / اتستخدم كام / باقي كام.
+تحت: «طباعة / حفظ PDF» أو «تحميل Excel» وابعته للتاجر.`,
+    a_en: `Open the store → "Debit & credit" tab → choose the period.
+Debit (owed by merchant) = orders. Credit (in merchant's favour) = returns + collections + bank deposits + granted incentives.
+Used incentives reduce the incentive balance (e.g. 100k granted, 10k used on an order → 90k left), while the order itself is a debit. A summary shows granted / used / remaining.
+Use "Print / save PDF" or "Download Excel" and send it to the merchant.`,
+  },
 ];
 
 /* =====================================================================
@@ -300,6 +341,12 @@ Pick all time / this month / a date range at the top. The yellow last row is the
 رصيد البنك = الإيداع + من الحافز − الأوردر.`,
     a_en: `Bank transactions: deposit, order, from incentive, and the bank balance after each.
 Bank balance = deposits + from incentive − orders.` },
+  { target: "#pled", go: "store", tab: "led",
+    t_ar: "دائن ومدين", t_en: "Debit & credit",
+    a_ar: `كشف حساب تفصيلي للتاجر: الأوردرات (مدين) قصاد المرتجعات والتحصيلات وإيداعات البنك والحوافز الممنوحة (دائن). الحوافز المستخدمة بتنقص رصيد الحوافز.
+اختار الفترة، وبعدين «طباعة / حفظ PDF» أو «تحميل Excel» وابعته للتاجر.`,
+    a_en: `A detailed statement: orders (debit) against returns, collections, bank deposits and granted incentives (credit). Used incentives reduce the incentive balance.
+Pick the period, then "Print / save PDF" or "Download Excel" to send to the merchant.` },
   { target: "#pdoc", go: "store", tab: "doc",
     t_ar: "ورق التاجر", t_en: "Store documents",
     a_ar: `فوق: البطاقة الضريبية، السجل التجاري، العقد، الإخطار، الإقرار —

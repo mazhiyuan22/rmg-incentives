@@ -188,6 +188,31 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
 .orig{font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap}
 .orig.ok{background:#E6F2EC;color:var(--green)}
 .orig.no{background:#F1F2F4;color:var(--mute)}
+.vat{display:inline-block;margin-top:6px;font-size:12px;font-weight:600;border-radius:999px;padding:2px 10px;background:rgba(23,32,43,.1)}
+.vat.bad{background:#9E2318;color:#fff}
+.tplbtn{display:flex;align-items:center;gap:6px;width:100%;justify-content:center;border:1px dashed #B9C0CA;background:var(--sheet);
+  border-radius:var(--r);padding:10px;font-weight:600;color:var(--ink2);margin-bottom:12px}
+#tplBox{margin:-4px 0 14px}
+.ledbar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.ledhead{margin-bottom:10px}
+.ledhead b{font-size:16px}
+.ledhead span{display:block;font-size:12.5px;color:var(--mute)}
+.ledhead span b{font-size:14px;color:var(--ink)}
+.incsum{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin:-4px 0 12px;padding:9px 12px;border:1px dashed var(--line);border-radius:12px;font-size:12.5px;color:var(--mute)}
+.incsum>b{color:var(--ink);font-size:13px}
+.incsum span b{color:var(--ink);margin-inline-start:3px}
+#ledger tr.info td{color:var(--mute);background:transparent}
+#ledger td.k small{display:block;font-size:11px;color:var(--mute);font-weight:400}
+#ledger td.k small.incb{color:#8a6d00;font-weight:600}
+#ledger .tbl table{font-size:12.5px}
+#ledger .tbl td,#ledger .tbl th{padding:8px 5px}
+#ledger .tbl tbody td:first-child{font-size:11.5px}
+@media print{
+  body.print-led header,body.print-led .back,body.print-led .hero,body.print-led .tabs,body.print-led .chips,body.print-led .range,
+  body.print-led .ledbar,body.print-led #botBtn,body.print-led #botBox,body.print-led #banner,body.print-led #spaper{display:none!important}
+  body.print-led{background:#fff}
+  body.print-led .tbl{border:0;overflow:visible}
+}
 .upbox{background:var(--sheet);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
 .upbox h4{margin:0 0 10px;font-size:15px}
 .pick{display:block;border:1.5px dashed #B9C0CA;border-radius:10px;padding:18px 12px;text-align:center;color:var(--ink2);font-weight:600;cursor:pointer;background:#FAFBFC}
@@ -260,6 +285,8 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
           <div class="warn" id="tPw"><span class="lbl" data-t="paperIssues"></span><b class="num" id="tP">—</b></div>
         </div>
       </div>
+      <button class="tplbtn" id="tplBtn"><span data-t="tplBtn"></span></button>
+      <div id="tplBox" class="hide"></div>
       <div class="filters">
         <input type="search" id="q" data-tp="search">
         <select id="reg" class="in"></select>
@@ -272,7 +299,7 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
       <button class="back" id="bk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg><span data-t="stores"></span></button>
       <div id="spaper" class="paper hide"></div>
       <div class="hero">
-        <div><h3 id="sname"></h3><div class="meta" id="smeta"></div></div>
+        <div><h3 id="sname"></h3><div class="meta" id="smeta"></div><div id="svat" class="vat hide"></div></div>
         <div class="bx"><div class="lbl" data-t="avail"></div><div class="big num" id="sbal"></div></div>
         <div class="parts">
           <div><span data-t="opening"></span><b class="num" id="pOp"></b></div>
@@ -286,6 +313,7 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
         <button data-p="ord"><span data-t="tabOrd"></span><span class="cnt num" id="cO"></span></button>
         <button data-p="inv"><span data-t="tabInv"></span><span class="cnt num" id="cI"></span></button>
         <button data-p="bank" data-t="tabBank"></button>
+        <button data-p="led" data-t="tabLed"></button>
         <button data-p="doc"><span data-t="tabDoc"></span><span class="cnt num" id="cD"></span></button>
       </nav>
       <div class="chips" id="qbx">
@@ -307,6 +335,10 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
       </div>
       <div id="pinv" class="hide"><div id="invs"></div></div>
       <div id="pbank" class="hide"><div id="banks"></div></div>
+      <div id="pled" class="hide">
+        <div class="ledbar"><button class="sbtn" id="ledPdf" data-t="ledPdf"></button><button class="sbtn" id="ledCsv" data-t="ledCsv"></button></div>
+        <div id="ledger"></div>
+      </div>
       <div id="pdoc" class="hide">
         <div id="papers"></div>
         <div class="upbox">
@@ -384,6 +416,36 @@ const I18N = {
   tabOrd:     ["أوردرات ومرتجعات", "Orders & returns", "订单与退货"],
   tabInv:     ["الفواتير", "Invoices", "发票"],
   tabBank:    ["البنك", "Bank", "银行"],
+  tabLed:     ["دائن ومدين", "Debit & credit", "借贷明细"],
+  ledPdf:     ["طباعة / حفظ PDF", "Print / save PDF", "打印 / 保存 PDF"],
+  ledCsv:     ["تحميل Excel", "Download Excel", "下载 Excel"],
+  ledTitle:   ["كشف حساب تفصيلي", "Detailed account statement", "明细对账单"],
+  ledDesc:    ["مدين (على التاجر) = الأوردرات.  دائن (للتاجر) = المرتجعات + التحصيلات + إيداعات البنك + الحوافز الممنوحة. الحوافز المستخدمة بتنقص رصيد الحوافز بس (الأوردر اللي اتدفع بيها قصاده الحافز اللي نزل).", "Debit (owed by merchant) = orders.  Credit (in merchant's favour) = returns + collections + bank deposits + granted incentives. Used incentives reduce the incentive balance only (the order they paid is offset by the credited incentive).", "借方（商户欠款）= 订单。贷方（商户应收）= 退货 + 收款 + 银行存款 + 发放的激励。已使用激励仅供参考（发放时已计入贷方）。"],
+  kInc:       ["حوافز ممنوحة", "Incentive granted", "发放激励"],
+  kIncOp:     ["رصيد حوافز سابق", "Incentives carried over", "结转激励"],
+  incBox:     ["الحوافز في الفترة:", "Incentives in period:", "期间激励："],
+  incIn:      ["نزلت", "Granted", "发放"],
+  incLeft:    ["الباقي", "Remaining", "剩余"],
+  infoOnly:   ["للعرض بس", "reference only", "仅供参考"],
+  incBal:     ["رصيد الحوافز:", "Incentive balance:", "激励余额："],
+  debit:      ["مدين", "Debit", "借方"],
+  credit:     ["دائن", "Credit", "贷方"],
+  ref:        ["رقم المستند / ملاحظات", "Doc no. / notes", "单据号/备注"],
+  desc:       ["البيان", "Description", "说明"],
+  kOrder:     ["أوردر", "Order", "订单"],
+  kReturn:    ["مرتجع", "Return", "退货"],
+  kColl:      ["تحصيل نقدي", "Cash collection", "现金收款"],
+  kDep:       ["إيداع بنك", "Bank deposit", "银行存款"],
+  kUsed:      ["حوافز مستخدمة", "Used incentives", "已使用激励"],
+  owes:       ["على التاجر", "owed by merchant", "商户欠款"],
+  owed:       ["للتاجر", "owed to merchant", "应付商户"],
+  ledEnd:     ["الرصيد آخر الفترة", "Closing balance", "期末余额"],
+  noLed:      ["مفيش حركات في الفترة دي", "No transactions in this period", "此期间没有交易"],
+  vatOk:      ["🧾 قيمة مضافة لحد {0}", "🧾 VAT until {0}", "🧾 增值税有效至 {0}"],
+  vatYes:     ["🧾 عنده شهادة قيمة مضافة", "🧾 VAT registered", "🧾 已登记增值税"],
+  vatExp:     ["⚠ شهادة القيمة المضافة انتهت {0}", "⚠ VAT certificate expired {0}", "⚠ 增值税证书已于 {0} 过期"],
+  tplBtn:     ["📄 نماذج للتحميل (ورقة تكويد، عقد...)", "📄 Templates to download (forms, contracts...)", "📄 可下载模板（表格、合同等）"],
+  tplNone:    ["مفيش نماذج مرفوعة لسه", "No templates uploaded yet", "暂无模板"],
   tabDoc:     ["ورق التاجر", "Documents", "商户文件"],
   rAll:       ["كل الفترات", "All time", "全部"],
   rMonth:     ["الشهر ده", "This month", "本月"],
@@ -517,13 +579,14 @@ const CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentC
 $("rbtn").innerHTML = ICON_REFRESH;
 
 let tok = null, refreshTok = null, expAt = 0;
-let extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[], merchant_originals:[]}, xsig = null, pane = "st", okind = "";
+let extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[], merchant_originals:[], collections:[]}, xsig = null, pane = "st", okind = "";
 const EXTRA = {
   orders: "id,merchant_id,date,kind,doc_no,item_name,color,qty,price,amount,status,notes",
   bank_balances: "id,merchant_id,date,balance,notes,deposit,order_amount,incentive",
   invoices: "id,merchant_id,file_path,file_name,invoice_no,pages,created_at",
   merchant_docs: "id,merchant_id,doc_type,file_path,file_name,mime,size_kb,notes,created_at,created_by",
-  merchant_originals: "id,merchant_id,doc_type,received,received_at,notes"
+  merchant_originals: "id,merchant_id,doc_type,received,received_at,notes",
+  collections: "id,merchant_id,date,amount,method,notes"
 };
 async function extraSig(){
   const out = [];
@@ -611,7 +674,7 @@ $("lform").addEventListener("submit", async ev => {
 function showLogin(msg){
   stopPoll();
   tok = refreshTok = null; data = null; sig = null; changed = new Set(); cur = null;
-  extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[], merchant_originals:[]}; xsig = null;
+  extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[], merchant_originals:[], collections:[]}; xsig = null;
   $("app").classList.add("hide"); $("login").classList.remove("hide");
   $("u").value = LS.get("rmg_user") || "";
   $("lerr").textContent = msg || "";
@@ -673,7 +736,8 @@ function apply(me, ms, tx){
     who: me[0] ? (me[0].display_name || me[0].username) : "",
     at: newest,
     ms: ms.map(m=>({id:m.id, code:String(m.code), name:m.name, region:m.region||"", bad:!!m.paper_issue, note:m.paper_note||"",
-                    op:+m.opening, inc:+m.incentive, used:+m.used, bal:+m.balance, tx:by[m.id]||[]}))
+                    op:+m.opening, inc:+m.incentive, used:+m.used, bal:+m.balance, tx:by[m.id]||[],
+                    vat:!!m.vat_cert, vatExp:m.vat_expiry||""}))
   };
   if (data){
     const old = Object.fromEntries(data.ms.map(m=>[m.id,m.bal]));
@@ -955,21 +1019,26 @@ function renderSt(){
   const bk = lastBank(m.id); $("pBkw").classList.toggle("hide", !bk); if (bk) $("pBk").textContent = fmt(bk.balance);
   $("spaper").classList.toggle("hide", !m.bad);
   $("spaper").textContent = t("paperBad") + (m.note ? " — " + m.note : "");
+  const today = new Date().toISOString().slice(0,10), vexp = m.vat && m.vatExp && m.vatExp < today;
+  $("svat").classList.toggle("hide", !m.vat); $("svat").classList.toggle("bad", !!vexp);
+  $("svat").textContent = !m.vat ? "" : vexp ? t("vatExp", m.vatExp) : m.vatExp ? t("vatOk", m.vatExp) : t("vatYes");
   const cnt = n => n ? String(n) : "";
   $("cO").textContent = cnt(new Set(extra.orders.filter(r=>r.merchant_id===m.id).map(r=>r.kind+(r.doc_no||r.id))).size);
   $("cI").textContent = cnt(extra.invoices.filter(r=>r.merchant_id===m.id).length);
   $("cD").textContent = cnt((extra.merchant_docs||[]).filter(r=>r.merchant_id===m.id).length);
-  const [a,b] = bounds(), dated = pane === "st" || pane === "ord";
+  const [a,b] = bounds(), dated = pane === "st" || pane === "ord" || pane === "led";
   $("qbx").classList.toggle("hide", !dated);
   $("rng").classList.toggle("hide", range !== "custom" || !dated);
   $("txs").classList.toggle("hide", pane !== "st");
   $("pord").classList.toggle("hide", pane !== "ord");
   $("pinv").classList.toggle("hide", pane !== "inv");
   $("pbank").classList.toggle("hide", pane !== "bank");
+  $("pled").classList.toggle("hide", pane !== "led");
   $("pdoc").classList.toggle("hide", pane !== "doc");
   if (pane === "ord") return renderOrders(m, a, b);
   if (pane === "inv") return renderInv(m);
   if (pane === "bank") return renderBank(m);
+  if (pane === "led") return renderLedger(m, a, b);
   if (pane === "doc") return renderDocs(m);
   let before = 0, add = 0, used = 0; const rows = [];
   for (const r of m.tx){
@@ -992,6 +1061,103 @@ function renderSt(){
     `<tr class="last"><td colspan="2">${esc(t("endBal"))}</td><td class="num r">${fmt(add)}</td><td class="num r">${fmt(used)}</td>
       <td class="num r">${fmt(end)}</td><td class="hn"></td></tr></tbody></table></div>`;
 }
+
+/* ---------------- كشف حساب تفصيلي (دائن ومدين) — من صفر ---------------- */
+function ledgerRows(m, a, b){
+  const ev = [], docs = new Map();
+  for (const r of extra.orders) if (r.merchant_id === m.id){
+    const k = r.kind + "|" + (r.doc_no || ("#" + r.id));
+    const d = docs.get(k) || {kind:r.kind, doc:r.doc_no || ("#" + r.id), date:r.date, amount:0, id:r.id};
+    d.amount += Number(r.amount||0); if (r.date < d.date) d.date = r.date; docs.set(k, d);
+  }
+  for (const d of docs.values()) ev.push(d.kind === "return" ? [d.date, 1, d.id, "kReturn", d.doc, 0, d.amount] : [d.date, 0, d.id, "kOrder", d.doc, d.amount, 0]);
+  for (const r of (extra.collections||[])) if (r.merchant_id === m.id) ev.push([r.date, 2, r.id, "kColl", r.notes||"", 0, Number(r.amount||0)]);
+  for (const r of extra.bank_balances) if (r.merchant_id === m.id){ const dep = bankParts(r)[0]; if (dep) ev.push([r.date, 3, r.id, "kDep", r.notes||"", 0, dep]); }
+  m.tx.forEach((r, i) => {
+    const n = /\.(xlsx|xlsm|xls)$/i.test(r.notes) ? "" : r.notes;
+    if (r.type === "incentive" || r.type === "opening") ev.push([r.date, 4, i, r.type === "opening" ? "kIncOp" : "kInc", n, 0, r.amount, 0]);
+    else if (r.type === "usage") ev.push([r.date, 5, i, "kUsed", n, 0, 0, r.amount]);   // للعرض بس — الحافز اتحسب دائن لما نزل
+  });
+  ev.sort((x, y) => (x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : x[1] - y[1] || x[2] - y[2]));
+  let opening = 0, run = null, incOpen = 0, incRun = 0; const out = [];
+  for (const [d, , , k, ref, dr, cr, info] of ev){
+    const inc = k === "kInc" || k === "kIncOp" ? cr : k === "kUsed" ? -info : 0;
+    if (d < a){ opening += dr - cr; incOpen += inc; continue; }
+    if (d > b) continue;
+    if (run === null){ run = opening; incRun = incOpen; }
+    run += dr - cr; incRun += inc;
+    out.push({date:d, kind:k, ref, dr, cr, info:info||0, bal:run, inc: inc ? incRun : null});
+  }
+  const sum = f => out.reduce((s, r) => s + f(r), 0);
+  const incIn = sum(r => r.kind === "kInc" || r.kind === "kIncOp" ? r.cr : 0), incUsed = sum(r => r.kind === "kUsed" ? r.info : 0);
+  return {opening, rows:out, end: out.length ? out[out.length-1].bal : opening, inc:{open:incOpen, in:incIn, used:incUsed, left:incOpen + incIn - incUsed}};
+}
+let ledCache = null;
+function renderLedger(m, a, b){
+  const L = ledgerRows(m, a, b), dash = '<span class="dash">—</span>';
+  ledCache = {m, a, b, L};
+  const side = v => v > 0.004 ? t("owes") : v < -0.004 ? t("owed") : "";
+  const D = L.rows.reduce((s, r) => s + r.dr, 0), C = L.rows.reduce((s, r) => s + r.cr, 0);
+  $("ledger").innerHTML = `<div class="ledhead"><b>${esc(t("ledTitle"))}</b><span><b>${esc(m.name)}</b> — <span class="num">${esc(m.code)}</span></span>
+      <span>${esc(a > "0001" ? a : "")} ${a > "0001" || b < "9999" ? "→" : ""} ${esc(b < "9999" ? b : "")}</span><span>${esc(t("ledDesc"))}</span></div>
+    <div class="totals"><div><span>${esc(t("debit"))}</span><b class="num minus">${fmt(D)}</b></div>
+      <div><span>${esc(t("credit"))}</span><b class="num plus">${fmt(C)}</b></div>
+      <div class="key"><span>${esc(t("ledEnd"))} ${esc(side(L.end))}</span><b class="num">${fmt(Math.abs(L.end))}</b></div></div>
+    <div class="incsum"><b>${esc(t("incBox"))}</b>
+      <span>${esc(t("incIn"))} <b class="num plus">${fmt(L.inc.in)}</b></span>
+      <span>${esc(t("kUsed"))} <b class="num">${fmt(L.inc.used)}</b></span>
+      <span>${esc(t("incLeft"))} <b class="num">${fmt(L.inc.left)}</b></span></div>
+    <div class="tbl"><table><thead><tr><th>${esc(t("date"))}</th><th>${esc(t("desc"))}</th><th class="hn">${esc(t("ref"))}</th>
+      <th class="r">${esc(t("debit"))}</th><th class="r">${esc(t("credit"))}</th><th class="r">${esc(t("balance"))}</th></tr></thead><tbody>
+      <tr class="edge"><td colspan="2">${esc(t("openBal"))}</td><td class="hn"></td><td></td><td></td><td class="num r">${fmt(L.opening)}</td></tr>` +
+    L.rows.map(r => `<tr${r.info ? ' class="info"' : ""}><td class="num">${esc(r.date)}</td><td class="k">${esc(t(r.kind))}${r.info ? `<small>${fmt(r.info)}</small>` : ""}${r.inc !== null ? `<small class="incb">${esc(t("incBal"))} ${fmt(r.inc)}</small>` : ""}</td><td class="n hn">${esc(r.ref)}</td>
+      ${r.dr ? `<td class="num r minus">${fmt(r.dr)}</td>` : `<td class="r">${dash}</td>`}
+      ${r.cr ? `<td class="num r plus">${fmt(r.cr)}</td>` : `<td class="r">${dash}</td>`}
+      <td class="num r"><b>${fmt(r.bal)}</b></td></tr>`).join("") +
+    (L.rows.length ? "" : `<tr><td colspan="6" class="n" style="text-align:center;padding:18px">${esc(t("noLed"))}</td></tr>`) +
+    `<tr class="last"><td colspan="2">${esc(t("ledEnd"))} ${esc(side(L.end))}</td><td class="hn"></td><td class="num r">${fmt(D)}</td><td class="num r">${fmt(C)}</td>
+      <td class="num r">${fmt(Math.abs(L.end))}</td></tr></tbody></table></div>`;
+}
+$("ledPdf").onclick = () => {
+  document.body.classList.add("print-led");
+  const done = () => { document.body.classList.remove("print-led"); window.removeEventListener("afterprint", done); };
+  window.addEventListener("afterprint", done);
+  setTimeout(() => window.print(), 50);
+  setTimeout(done, 60000);
+};
+$("ledCsv").onclick = () => {
+  if (!ledCache) return;
+  const {m, a, b, L} = ledCache, q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const lines = [[t("ledTitle"), m.name, m.code].map(q).join(","), [a > "0001" ? a : "", b < "9999" ? b : ""].map(q).join(","), "",
+    [t("date"), t("desc"), t("ref"), t("debit"), t("credit"), t("balance")].map(q).join(","),
+    ["", t("openBal"), "", "", "", L.opening.toFixed(2)].map(q).join(",")]
+    .concat(L.rows.map(r => [r.date, t(r.kind) + (r.info ? ` (${r.info.toFixed(2)})` : "") + (r.inc !== null ? ` — ${t("incBal")} ${r.inc.toFixed(2)}` : ""), r.ref, r.dr ? r.dr.toFixed(2) : "", r.cr ? r.cr.toFixed(2) : "", r.bal.toFixed(2)].map(q).join(",")))
+    .concat(["", [t("incBox"), t("incIn") + " " + L.inc.in.toFixed(2), t("kUsed") + " " + L.inc.used.toFixed(2), t("incLeft") + " " + L.inc.left.toFixed(2)].map(q).join(",")])
+    .concat(["", ["", t("ledEnd"), L.end > 0.004 ? t("owes") : L.end < -0.004 ? t("owed") : "", "", "", Math.abs(L.end).toFixed(2)].map(q).join(",")]);
+  const blob = new Blob(["\ufeff" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob), el = document.createElement("a");
+  el.href = url; el.download = `statement_${m.code}_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(el); el.click(); el.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+};
+
+/* ---------------- نماذج للتحميل ---------------- */
+let tplList = null;
+$("tplBtn").onclick = async () => {
+  const box = $("tplBox");
+  if (!box.classList.contains("hide")){ box.classList.add("hide"); return; }
+  box.classList.remove("hide"); box.innerHTML = `<div class="empty" style="padding:14px">${esc(t("loading"))}</div>`;
+  try{ await ensure(); tplList = await getAll("/rest/v1/templates?select=id,title,file_path,file_name,mime,created_at&deleted_at=is.null&order=id.desc"); }
+  catch(e){ tplList = []; }
+  box.innerHTML = tplList.length ? `<div class="sheet">` + tplList.map(r => `<div class="file"><div class="ic">${esc((r.file_name.split(".").pop()||"").toUpperCase().slice(0,4))}</div>
+      <div class="tt"><b>${esc(r.title)}</b><span>${esc(r.file_name)}</span></div>
+      <button class="sbtn" data-tpl="${r.id}">${esc(t("download"))}</button></div>`).join("") + `</div>` :
+    `<div class="empty" style="padding:14px">${esc(t("tplNone"))}</div>`;
+};
+$("tplBox").addEventListener("click", e => {
+  const b = e.target.closest("[data-tpl]"); if (!b) return;
+  const r = (tplList||[]).find(x => x.id === +b.dataset.tpl); if (!r) return;
+  download("templates", r, r.mime || "application/octet-stream", "openFail", b);
+});
 
 boot();
 </script>
