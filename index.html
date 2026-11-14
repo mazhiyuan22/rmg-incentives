@@ -194,6 +194,50 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
   border-radius:var(--r);padding:10px;font-weight:600;color:var(--ink2);margin-bottom:12px}
 #tplBox{margin:-4px 0 14px}
 .ledbar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+/* ---- كشف الحساب للطباعة ---- */
+.st{color:#1d1d1f;font-size:9.5pt;line-height:1.45;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.st .num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+.st-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding-bottom:10px;border-bottom:3px solid #FFC915}
+.st-brand{display:flex;align-items:center;gap:10px}
+.st-logo{width:42px;height:42px;border-radius:9px;background:#FFC915;color:#1d1d1f;display:grid;place-items:center;font-weight:700;font-size:12pt;letter-spacing:.3px}
+.st-brand b{display:block;font-size:13pt}
+.st-brand span{display:block;font-size:8.5pt;color:#6b6b6b}
+.st-title{text-align:end}
+.st-title h1{margin:0;font-size:16pt;font-weight:700}
+.st-title span{font-size:8.5pt;color:#6b6b6b}
+.st-info{display:grid;grid-template-columns:repeat(3,1fr);margin:12px 0;border:1px solid #d9d9d9;border-radius:6px;overflow:hidden}
+.st-info div{padding:6px 10px;border-inline-end:1px solid #e6e6e6;border-bottom:1px solid #e6e6e6}
+.st-info div:nth-child(3n){border-inline-end:0}
+.st-info div:nth-last-child(-n+3){border-bottom:0}
+.st-info span{display:block;font-size:7.5pt;color:#6b6b6b}
+.st-info b{font-size:10pt;font-weight:600}
+.st-sum{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-bottom:12px;border:1px solid #d9d9d9;border-radius:6px;overflow:hidden}
+.st-sum div{padding:7px 10px;border-inline-end:1px solid #e6e6e6}
+.st-sum div:last-child{border-inline-end:0}
+.st-sum span{display:block;font-size:7.5pt;color:#6b6b6b}
+.st-sum b{font-size:11pt}
+.st-sum .end{background:#FFF4CC}
+.st-sum .end small{display:block;font-size:7.5pt;font-weight:600;color:#8a6d00}
+.st table{width:100%;border-collapse:collapse;font-size:8.8pt}
+.st thead{display:table-header-group}
+.st th{background:#26292e;color:#fff;font-weight:600;padding:6px 6px;text-align:start;white-space:nowrap}
+.st th.r,.st td.r{text-align:end}
+.st td{padding:5px 6px;border-bottom:1px solid #ececec;vertical-align:top}
+.st td.num{white-space:nowrap}
+.st tbody tr:nth-child(even) td{background:#fafafa}
+.st tr{break-inside:avoid}
+.st td.dr{color:#b3261e}.st td.cr{color:#1e7b45}
+.st td.ibal{color:#8a6d00}
+.st td.mut{color:#9a9a9a}
+.st tr.open td{background:#f2f2f2!important;font-weight:600}
+.st tr.tot td{background:#26292e!important;color:#fff;font-weight:700;border:0}
+.st td small{display:block;color:#7a7a7a;font-size:7.8pt}
+.st-notes{margin-top:12px;font-size:8pt;color:#555}
+.st-notes b{color:#1d1d1f}
+.st-notes p{margin:2px 0}
+.st-sig{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:26px;break-inside:avoid}
+.st-sig div{border-top:1px solid #999;padding-top:5px;font-size:8.5pt;color:#555;text-align:center}
+.st-foot{margin-top:16px;padding-top:6px;border-top:1px solid #e6e6e6;display:flex;justify-content:space-between;font-size:7.5pt;color:#9a9a9a}
 .ledhead{margin-bottom:10px}
 .ledhead b{font-size:16px}
 .ledhead span{display:block;font-size:12.5px;color:var(--mute)}
@@ -207,7 +251,12 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
 #ledger .tbl table{font-size:12.5px}
 #ledger .tbl td,#ledger .tbl th{padding:8px 5px}
 #ledger .tbl tbody td:first-child{font-size:11.5px}
+#ledPrint{display:none}
 @media print{
+  @page{size:A4;margin:12mm 11mm 14mm}
+  body.print-led>*:not(#ledPrint){display:none!important}
+  body.print-led #ledPrint{display:block!important}
+  html:has(body.print-led),body.print-led{background:#fff!important;padding:0!important}
   body.print-led header,body.print-led .back,body.print-led .hero,body.print-led .tabs,body.print-led .chips,body.print-led .range,
   body.print-led .ledbar,body.print-led #botBtn,body.print-led #botBox,body.print-led #banner,body.print-led #spaper{display:none!important}
   body.print-led{background:#fff}
@@ -428,6 +477,35 @@ const I18N = {
   incLeft:    ["الباقي", "Remaining", "剩余"],
   infoOnly:   ["للعرض بس", "reference only", "仅供参考"],
   incBal:     ["رصيد الحوافز:", "Incentive balance:", "激励余额："],
+  coName:     ["RMG International", "RMG International", "RMG International"],
+  coSub:      ["الموزع المعتمد لهواتف realme في مصر — قسم التريد", "Authorized realme distributor in Egypt — Trade Department", "realme 埃及授权分销商 — 贸易部"],
+  stMer:      ["التاجر", "Merchant", "商户"],
+  stCode:     ["كود التاجر", "Merchant code", "商户代码"],
+  stRegion:   ["المنطقة", "Region", "区域"],
+  stPeriod:   ["الفترة", "Period", "期间"],
+  stIssued:   ["تاريخ الإصدار", "Issue date", "出具日期"],
+  stNo:       ["رقم الكشف", "Statement no.", "对账单编号"],
+  stVat:      ["شهادة القيمة المضافة", "VAT certificate", "增值税证书"],
+  stVatNo:    ["لا يوجد", "None", "无"],
+  stVatTo:    ["سارية حتى {0}", "Valid until {0}", "有效至 {0}"],
+  stVatEx:    ["منتهية {0}", "Expired {0}", "已于 {0} 过期"],
+  stVatY:     ["يوجد", "Yes", "有"],
+  stAll:      ["من البداية حتى {0}", "From the start to {0}", "自开始至 {0}"],
+  stRange:    ["من {0} إلى {1}", "From {0} to {1}", "自 {0} 至 {1}"],
+  stTotDr:    ["إجمالي المدين", "Total debit", "借方合计"],
+  stTotCr:    ["إجمالي الدائن", "Total credit", "贷方合计"],
+  stIncBal:   ["رصيد الحوافز", "Incentive balance", "激励余额"],
+  stTotal:    ["الإجمالي", "Total", "合计"],
+  stNotes:    ["ملاحظات", "Notes", "说明"],
+  stN1:       ["مدين (على التاجر) = الأوردرات. دائن (للتاجر) = المرتجعات + التحصيلات النقدية + إيداعات البنك + الحوافز الممنوحة.", "Debit (owed by the merchant) = orders. Credit (in the merchant's favour) = returns + cash collections + bank deposits + granted incentives.", "借方（商户欠款）= 订单。贷方（商户应收）= 退货 + 现金收款 + 银行存款 + 发放的激励。"],
+  stN2:       ["الحوافز المستخدمة تُخصم من رصيد الحوافز؛ والأوردر المدفوع بها مسجّل مدين، فلا يتكرر خصمها من رصيد الحساب.", "Used incentives are deducted from the incentive balance; the order they paid is recorded as a debit, so they are not deducted twice.", "已使用激励从激励余额中扣除；其支付的订单已记为借方，不会重复扣减。"],
+  stN3:       ["برجاء مراجعة الكشف وإبلاغ المشرف المسؤول بأي ملاحظات.", "Please review this statement and report any discrepancy to your supervisor.", "请核对本对账单，如有差异请告知负责主管。"],
+  stSig1:     ["إعداد", "Prepared by", "编制"],
+  stSig2:     ["اعتماد", "Approved by", "审核"],
+  stSig3:     ["توقيع وختم التاجر", "Merchant signature & stamp", "商户签字盖章"],
+  stFoot:     ["صادر من نظام حوافز RMG", "Generated by the RMG incentives system", "由 RMG 激励系统生成"],
+  stNone:     ["مفيش حركات في الفترة دي", "No entries in this period", "该期间无记录"],
+  stXlErr:    ["مقدرتش أجهّز ملف Excel — اتأكد من النت وجرب تاني", "Couldn't prepare the Excel file — check the connection and try again", "无法生成 Excel 文件 — 请检查网络后重试"],
   debit:      ["مدين", "Debit", "借方"],
   credit:     ["دائن", "Credit", "贷方"],
   ref:        ["رقم المستند / ملاحظات", "Doc no. / notes", "单据号/备注"],
@@ -1118,26 +1196,202 @@ function renderLedger(m, a, b){
     `<tr class="last"><td colspan="2">${esc(t("ledEnd"))} ${esc(side(L.end))}</td><td class="hn"></td><td class="num r">${fmt(D)}</td><td class="num r">${fmt(C)}</td>
       <td class="num r">${fmt(Math.abs(L.end))}</td></tr></tbody></table></div>`;
 }
+/* ---- نموذج الكشف (مشترك بين PDF و Excel) ---- */
+function stModel(){
+  const {m, a, b, L} = ledCache, today = new Date().toISOString().slice(0,10);
+  const D = L.rows.reduce((x, r) => x + r.dr, 0), C = L.rows.reduce((x, r) => x + r.cr, 0);
+  const period = a > "0001" || b < "9999" ? t("stRange", a > "0001" ? a : "—", b < "9999" ? b : today) : t("stAll", today);
+  const vexp = m.vat && m.vatExp && m.vatExp < today;
+  const vat = !m.vat ? t("stVatNo") : vexp ? t("stVatEx", m.vatExp) : m.vatExp ? t("stVatTo", m.vatExp) : t("stVatY");
+  const no = `ST-${m.code}-${today.replace(/-/g, "")}`;
+  const rows = L.rows.map((r, i) => ({
+    n: i + 1, date: r.date, kind: t(r.kind), used: r.info || 0, ref: r.ref || "",
+    dr: r.dr, cr: r.cr, bal: r.bal, inc: r.inc
+  }));
+  const side = v => v > 0.004 ? t("owes") : v < -0.004 ? t("owed") : "";
+  return {m, today, period, vat, no, D, C, opening: L.opening, end: L.end, endSide: side(L.end), rows, incLeft: L.inc.left, incIn: L.inc.in, incUsed: L.inc.used};
+}
+function stHtml(S){
+  const f = v => fmt(v), dash = "—", dz = v => esc(v).replace(/(\d{4}-\d{2}-\d{2})/g, '<bdi class="num">$1</bdi>');
+  return `<div class="st" dir="${lang === "ar" ? "rtl" : "ltr"}">
+  <div class="st-top">
+    <div class="st-brand"><div class="st-logo">RMG</div><div><b>${esc(t("coName"))}</b><span>${esc(t("coSub"))}</span></div></div>
+    <div class="st-title"><h1>${esc(t("ledTitle"))}</h1><span>${esc(t("stNo"))}: <span class="num">${esc(S.no)}</span></span></div>
+  </div>
+  <div class="st-info">
+    <div><span>${esc(t("stMer"))}</span><b>${esc(S.m.name)}</b></div>
+    <div><span>${esc(t("stCode"))}</span><b class="num">${esc(S.m.code)}</b></div>
+    <div><span>${esc(t("stRegion"))}</span><b>${esc(S.m.region || dash)}</b></div>
+    <div><span>${esc(t("stPeriod"))}</span><b>${dz(S.period)}</b></div>
+    <div><span>${esc(t("stIssued"))}</span><b class="num">${esc(S.today)}</b></div>
+    <div><span>${esc(t("stVat"))}</span><b>${dz(S.vat)}</b></div>
+  </div>
+  <div class="st-sum">
+    <div><span>${esc(t("openBal"))}</span><b class="num">${f(S.opening)}</b></div>
+    <div><span>${esc(t("stTotDr"))}</span><b class="num" style="color:#b3261e">${f(S.D)}</b></div>
+    <div><span>${esc(t("stTotCr"))}</span><b class="num" style="color:#1e7b45">${f(S.C)}</b></div>
+    <div class="end"><span>${esc(t("ledEnd"))}</span><b class="num">${f(Math.abs(S.end))}</b><small>${esc(S.endSide)}</small></div>
+    <div><span>${esc(t("stIncBal"))}</span><b class="num" style="color:#8a6d00">${f(S.incLeft)}</b></div>
+  </div>
+  <table><thead><tr><th>#</th><th>${esc(t("date"))}</th><th>${esc(t("desc"))}</th><th>${esc(t("ref"))}</th>
+    <th class="r">${esc(t("debit"))}</th><th class="r">${esc(t("credit"))}</th><th class="r">${esc(t("balance"))}</th><th class="r">${esc(t("stIncBal"))}</th></tr></thead>
+  <tbody>
+    <tr class="open"><td></td><td></td><td colspan="2">${esc(t("openBal"))}</td><td></td><td></td><td class="r num">${f(S.opening)}</td><td></td></tr>
+    ${S.rows.map(r => `<tr><td class="mut num">${r.n}</td><td class="num">${esc(r.date)}</td>
+      <td>${esc(r.kind)}${r.used ? `<small class="num">${f(r.used)}</small>` : ""}</td><td>${esc(r.ref)}</td>
+      <td class="r num ${r.dr ? "dr" : "mut"}">${r.dr ? f(r.dr) : dash}</td>
+      <td class="r num ${r.cr ? "cr" : "mut"}">${r.cr ? f(r.cr) : dash}</td>
+      <td class="r num"><b>${f(r.bal)}</b></td>
+      <td class="r num ${r.inc !== null ? "ibal" : "mut"}">${r.inc !== null ? f(r.inc) : ""}</td></tr>`).join("")}
+    ${S.rows.length ? "" : `<tr><td colspan="8" style="text-align:center;padding:14px;color:#888">${esc(t("stNone"))}</td></tr>`}
+    <tr class="tot"><td></td><td></td><td colspan="2">${esc(t("stTotal"))}</td><td class="r num">${f(S.D)}</td><td class="r num">${f(S.C)}</td>
+      <td class="r num">${f(Math.abs(S.end))} ${esc(S.endSide)}</td><td class="r num">${f(S.incLeft)}</td></tr>
+  </tbody></table>
+  <div class="st-notes"><b>${esc(t("stNotes"))}</b><p>• ${esc(t("stN1"))}</p><p>• ${esc(t("stN2"))}</p><p>• ${esc(t("stN3"))}</p></div>
+  <div class="st-sig"><div>${esc(t("stSig1"))}</div><div>${esc(t("stSig2"))}</div><div>${esc(t("stSig3"))}</div></div>
+  <div class="st-foot"><span>${esc(t("stFoot"))}</span><span class="num">${esc(S.no)}</span></div>
+</div>`;
+}
 $("ledPdf").onclick = () => {
+  if (!ledCache) return;
+  const S = stModel();
+  $("ledPrint").innerHTML = stHtml(S);
+  const oldTitle = document.title;
+  document.title = `${t("ledTitle")} - ${S.m.name} - ${S.m.code}`;
   document.body.classList.add("print-led");
-  const done = () => { document.body.classList.remove("print-led"); window.removeEventListener("afterprint", done); };
+  const done = () => { document.body.classList.remove("print-led"); document.title = oldTitle; window.removeEventListener("afterprint", done); };
   window.addEventListener("afterprint", done);
-  setTimeout(() => window.print(), 50);
+  setTimeout(() => window.print(), 80);
   setTimeout(done, 60000);
 };
-$("ledCsv").onclick = () => {
+
+/* ---- Excel منسّق (ExcelJS بيتحمل وقت الحاجة بس) ---- */
+let xlLib = null;
+function loadExcelJS(){
+  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  return xlLib ||= new Promise((ok, no) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
+    sc.onload = () => ok(window.ExcelJS); sc.onerror = () => { xlLib = null; no(new Error("load")); };
+    document.head.appendChild(sc);
+  });
+}
+async function stXlsx(S){
+  const X = await loadExcelJS();
+  const wb = new X.Workbook(); wb.creator = "RMG International"; wb.created = new Date();
+  const rtl = lang === "ar";
+  const ws = wb.addWorksheet(lang === "ar" ? "كشف حساب" : "Statement", {
+    views: [{rightToLeft: rtl, showGridLines: false, state: "frozen", ySplit: 11}],
+    pageSetup: {paperSize: 9, orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0,
+                margins: {left: .4, right: .4, top: .5, bottom: .6, header: .2, footer: .25}, printTitlesRow: "11:11"},
+    headerFooter: {oddFooter: `&L&8${S.no}&C&8&P / &N&R&8${t("stFoot")}`}
+  });
+  const F = "Arial", INK = "FF1D1D1F", MUTE = "FF6B6B6B", YEL = "FFFFC915", DARK = "FF26292E", LINE = "FFD9D9D9";
+  const NUM = '#,##0.00;-#,##0.00;"—"', BAL = "#,##0.00;-#,##0.00;0.00";
+  ws.columns = [{width: 5}, {width: 12}, {width: 22}, {width: 28}, {width: 15}, {width: 15}, {width: 16}, {width: 15}];
+  const thin = {style: "thin", color: {argb: LINE}};
+  const box = {top: thin, bottom: thin, left: thin, right: thin};
+  const put = (addr, v, st = {}) => { const c = ws.getCell(addr); c.value = v; Object.assign(c, st); return c; };
+  const al = (h = rtl ? "right" : "left", v = "middle", wrap = false) => ({horizontal: h, vertical: v, wrapText: wrap, readingOrder: rtl ? "rtl" : "ltr"});
+
+  // 1-2 ترويسة
+  ws.mergeCells("A1:D1"); ws.mergeCells("E1:H1"); ws.mergeCells("A2:D2"); ws.mergeCells("E2:H2");
+  put("A1", t("coName"), {font: {name: F, size: 15, bold: true, color: {argb: INK}}, alignment: al()});
+  put("A2", t("coSub"), {font: {name: F, size: 9, color: {argb: MUTE}}, alignment: al()});
+  put("E1", t("ledTitle"), {font: {name: F, size: 16, bold: true, color: {argb: INK}}, alignment: al(rtl ? "left" : "right")});
+  put("E2", `${t("stNo")}: ${S.no}`, {font: {name: F, size: 9, color: {argb: MUTE}}, alignment: al(rtl ? "left" : "right")});
+  ws.getRow(1).height = 26; ws.getRow(2).height = 16;
+  for (let c = 1; c <= 8; c++) ws.getCell(3, c).fill = {type: "pattern", pattern: "solid", fgColor: {argb: YEL}};
+  ws.getRow(3).height = 4;
+
+  // 5-6 بيانات التاجر (3 خانات × صفين)
+  const info = [[t("stMer"), S.m.name], [t("stCode"), S.m.code], [t("stRegion"), S.m.region || "—"],
+                [t("stPeriod"), S.period], [t("stIssued"), S.today], [t("stVat"), S.vat]];
+  const spans = [["A", "C"], ["D", "E"], ["F", "H"]];
+  info.forEach(([k, v], i) => {
+    const r = 5 + Math.floor(i / 3), [c1, c2] = spans[i % 3];
+    ws.mergeCells(`${c1}${r}:${c2}${r}`);
+    const c = put(`${c1}${r}`, {richText: [{text: k + "\n", font: {name: F, size: 8, color: {argb: MUTE}}},
+                                          {text: String(v), font: {name: F, size: 10.5, bold: true, color: {argb: INK}}}]},
+                  {alignment: al(undefined, "middle", true)});
+    for (let cc = ws.getColumn(c1).number; cc <= ws.getColumn(c2).number; cc++) ws.getCell(r, cc).border = box;
+  });
+  ws.getRow(5).height = 32; ws.getRow(6).height = 32;
+
+  // 8-9 الملخص
+  const sum = [[t("openBal"), S.opening, INK], [t("stTotDr"), S.D, "FFB3261E"], [t("stTotCr"), S.C, "FF1E7B45"],
+               [`${t("ledEnd")} (${S.endSide || "—"})`, Math.abs(S.end), INK], [t("stIncBal"), S.incLeft, "FF8A6D00"]];
+  const sc = [["A", "B"], ["C", "C"], ["D", "D"], ["E", "F"], ["G", "H"]];
+  sum.forEach(([k, v, col], i) => {
+    const [c1, c2] = sc[i];
+    if (c1 !== c2){ ws.mergeCells(`${c1}8:${c2}8`); ws.mergeCells(`${c1}9:${c2}9`); }
+    put(`${c1}8`, k, {font: {name: F, size: 8, color: {argb: MUTE}}, alignment: al(undefined, "bottom")});
+    put(`${c1}9`, v, {font: {name: F, size: 12, bold: true, color: {argb: col}}, numFmt: "#,##0.00", alignment: al(undefined, "top")});
+    for (let cc = ws.getColumn(c1).number; cc <= ws.getColumn(c2).number; cc++){
+      ws.getCell(8, cc).border = {top: thin, left: thin, right: thin}; ws.getCell(9, cc).border = {bottom: thin, left: thin, right: thin};
+      if (i === 3){ ws.getCell(8, cc).fill = ws.getCell(9, cc).fill = {type: "pattern", pattern: "solid", fgColor: {argb: "FFFFF4CC"}}; }
+    }
+  });
+  ws.getRow(8).height = 16; ws.getRow(9).height = 22;
+
+  // 11 رأس الجدول
+  const head = ["#", t("date"), t("desc"), t("ref"), t("debit"), t("credit"), t("balance"), t("stIncBal")];
+  const hr = ws.getRow(11); hr.values = head; hr.height = 22;
+  hr.eachCell((c, i) => { c.font = {name: F, size: 9.5, bold: true, color: {argb: "FFFFFFFF"}};
+    c.fill = {type: "pattern", pattern: "solid", fgColor: {argb: DARK}}; c.alignment = al(i >= 5 ? "center" : undefined); });
+
+  // رصيد أول الفترة
+  let r = 12;
+  const openRow = ws.getRow(r); openRow.values = ["", "", t("openBal"), "", null, null, S.opening, null];
+  openRow.eachCell({includeEmpty: true}, (c, i) => { c.fill = {type: "pattern", pattern: "solid", fgColor: {argb: "FFF2F2F2"}};
+    c.font = {name: F, size: 9.5, bold: true, color: {argb: INK}}; c.border = {bottom: thin}; c.alignment = al(); if (i >= 5) c.numFmt = i === 7 ? BAL : NUM; });
+  const first = r + 1;
+  for (const x of S.rows){
+    r++;
+    const row = ws.getRow(r);
+    row.values = [x.n, x.date, x.used ? `${x.kind} (${fmt(x.used)})` : x.kind, x.ref, x.dr || 0, x.cr || 0, x.bal, x.inc];
+    row.eachCell({includeEmpty: true}, (c, i) => {
+      c.font = {name: F, size: 9.5, color: {argb: i === 1 ? "FF9A9A9A" : i === 5 && x.dr ? "FFB3261E" : i === 6 && x.cr ? "FF1E7B45" : i === 8 ? "FF8A6D00" : INK}, bold: i === 7};
+      c.border = {bottom: {style: "hair", color: {argb: "FFDDDDDD"}}};
+      c.alignment = al(i === 1 ? "center" : undefined, "middle", i === 4);
+      if (i >= 5) c.numFmt = i === 7 ? BAL : NUM;
+      if (x.n % 2 === 0) c.fill = {type: "pattern", pattern: "solid", fgColor: {argb: "FFFAFAFA"}};
+    });
+  }
+  // الإجمالي
+  r++;
+  const tr = ws.getRow(r);
+  tr.values = ["", "", t("stTotal"), S.endSide, S.rows.length ? {formula: `SUM(E${first}:E${r-1})`, result: S.D} : 0,
+               S.rows.length ? {formula: `SUM(F${first}:F${r-1})`, result: S.C} : 0, Math.abs(S.end), S.incLeft];
+  tr.height = 22;
+  tr.eachCell({includeEmpty: true}, (c, i) => { c.font = {name: F, size: 10, bold: true, color: {argb: "FFFFFFFF"}};
+    c.fill = {type: "pattern", pattern: "solid", fgColor: {argb: DARK}}; c.alignment = al(); if (i >= 5) c.numFmt = "#,##0.00"; });
+
+  // ملاحظات + توقيعات
+  r += 2;
+  put(`A${r}`, t("stNotes"), {font: {name: F, size: 9.5, bold: true, color: {argb: INK}}, alignment: al()});
+  for (const k of ["stN1", "stN2", "stN3"]){ r++; ws.mergeCells(`A${r}:H${r}`);
+    put(`A${r}`, "• " + t(k), {font: {name: F, size: 8.5, color: {argb: "FF555555"}}, alignment: al(undefined, "top", true)}); ws.getRow(r).height = 24; }
+  r += 3;
+  [["A", "C", "stSig1"], ["D", "E", "stSig2"], ["F", "H", "stSig3"]].forEach(([a1, a2, k]) => {
+    ws.mergeCells(`${a1}${r}:${a2}${r}`);
+    put(`${a1}${r}`, t(k), {font: {name: F, size: 9, color: {argb: "FF555555"}}, alignment: {horizontal: "center", vertical: "top"}});
+    for (let cc = ws.getColumn(a1).number; cc <= ws.getColumn(a2).number; cc++) ws.getCell(r, cc).border = {top: {style: "thin", color: {argb: "FF999999"}}};
+  });
+  ws.getRow(r).height = 30;
+  return wb.xlsx.writeBuffer();
+}
+$("ledCsv").onclick = async () => {
   if (!ledCache) return;
-  const {m, a, b, L} = ledCache, q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const lines = [[t("ledTitle"), m.name, m.code].map(q).join(","), [a > "0001" ? a : "", b < "9999" ? b : ""].map(q).join(","), "",
-    [t("date"), t("desc"), t("ref"), t("debit"), t("credit"), t("balance")].map(q).join(","),
-    ["", t("openBal"), "", "", "", L.opening.toFixed(2)].map(q).join(",")]
-    .concat(L.rows.map(r => [r.date, t(r.kind) + (r.info ? ` (${r.info.toFixed(2)})` : "") + (r.inc !== null ? ` — ${t("incBal")} ${r.inc.toFixed(2)}` : ""), r.ref, r.dr ? r.dr.toFixed(2) : "", r.cr ? r.cr.toFixed(2) : "", r.bal.toFixed(2)].map(q).join(",")))
-    .concat(["", [t("incBox"), t("incIn") + " " + L.inc.in.toFixed(2), t("kUsed") + " " + L.inc.used.toFixed(2), t("incLeft") + " " + L.inc.left.toFixed(2)].map(q).join(",")])
-    .concat(["", ["", t("ledEnd"), L.end > 0.004 ? t("owes") : L.end < -0.004 ? t("owed") : "", "", "", Math.abs(L.end).toFixed(2)].map(q).join(",")]);
-  const blob = new Blob(["\ufeff" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
-  const url = URL.createObjectURL(blob), el = document.createElement("a");
-  el.href = url; el.download = `statement_${m.code}_${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(el); el.click(); el.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+  const b = $("ledCsv"), old = b.textContent; b.disabled = true; b.textContent = "…";
+  try{
+    const S = stModel(), buf = await stXlsx(S);
+    const blob = new Blob([buf], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    const url = URL.createObjectURL(blob), el = document.createElement("a");
+    el.href = url; el.download = `statement_${S.m.code}_${S.today}.xlsx`;
+    document.body.appendChild(el); el.click(); el.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }catch(e){ console.warn(e); alert(t("stXlErr")); }
+  finally{ b.disabled = false; b.textContent = old; }
 };
 
 /* ---------------- نماذج للتحميل ---------------- */
@@ -1162,5 +1416,6 @@ $("tplBox").addEventListener("click", e => {
 boot();
 </script>
 <script src="bot.js?v=1"></script>
+<div id="ledPrint" aria-hidden="true"></div>
 </body>
 </html>
