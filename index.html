@@ -536,7 +536,7 @@ async function extraSig(){
 async function fetchExtra(){
   const d = {};
   for (const tb in EXTRA){
-    try{ d[tb] = await getAll(`/rest/v1/${tb}?select=${EXTRA[tb]}&deleted_at=is.null&order=id`); }
+    try{ d[tb] = await getAll(`/rest/v1/${tb}?select=${EXTRA[tb]}${tb === "merchant_originals" ? "" : "&deleted_at=is.null"}&order=id`); }   // جدول الأصول مالوش deleted_at
     catch(e){
       if (e.net) throw e; d[tb] = [];
       if (tb === "bank_balances"){   // السيرفر لسه من غير تحديث 5
