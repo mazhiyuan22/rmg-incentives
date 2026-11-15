@@ -7,7 +7,7 @@
 <meta name="color-scheme" content="light">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="RMG">
+<meta name="apple-mobile-web-app-title" content="REALME">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-<title>RMG Incentives</title>
+<title>REALME Incentives</title>
 <style>
 :root{
   --paper:#F4F5F7; --sheet:#FFFFFF; --ink:#17202B; --ink2:#3A4452; --mute:#69727F; --line:#E4E7EC;
@@ -48,7 +48,7 @@ span.num{white-space:nowrap}
 .lwrap{flex:1;display:flex;align-items:center;justify-content:center}
 .lbox{width:100%;max-width:360px}
 .brand{display:flex;align-items:center;gap:12px;margin-bottom:28px}
-.mark{width:48px;height:48px;border-radius:12px;background:var(--yel);display:grid;place-items:center;font-weight:700;font-size:15px;letter-spacing:.5px;color:var(--ink);flex:none}
+.mark{min-width:48px;height:48px;padding:0 12px;border-radius:12px;background:var(--yel);display:grid;place-items:center;font-weight:800;font-size:14px;letter-spacing:.8px;color:var(--ink);flex:none}
 .brand h1{margin:0;font-size:22px;line-height:1.2}
 .brand p{margin:2px 0 0;color:var(--mute);font-size:13px}
 label.f{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin:16px 0 6px}
@@ -65,7 +65,7 @@ input:focus,select.in:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(23
 header{position:sticky;top:0;z-index:5;background:var(--sheet);border-bottom:1px solid var(--line);
   padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top))}
 .hrow{display:flex;align-items:center;gap:8px;max-width:900px;margin:0 auto}
-.hrow .mark{width:34px;height:34px;border-radius:9px;font-size:11px}
+.hrow .mark{min-width:34px;height:34px;padding:0 8px;border-radius:9px;font-size:10.5px}
 .hrow h2{font-size:16px;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ib{background:none;border:1px solid var(--line);border-radius:999px;width:36px;height:36px;display:grid;place-items:center;color:var(--ink2);flex:none;padding:0}
 .ib svg{width:17px;height:17px}
@@ -199,7 +199,7 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
 .st .num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
 .st-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding-bottom:10px;border-bottom:3px solid #FFC915}
 .st-brand{display:flex;align-items:center;gap:10px}
-.st-logo{width:42px;height:42px;border-radius:9px;background:#FFC915;color:#1d1d1f;display:grid;place-items:center;font-weight:700;font-size:12pt;letter-spacing:.3px}
+.st-logo{min-width:42px;height:42px;padding:0 10px;border-radius:9px;background:#FFC915;color:#1d1d1f;display:grid;place-items:center;font-weight:800;font-size:11pt;letter-spacing:.8px}
 .st-brand b{display:block;font-size:13pt}
 .st-brand span{display:block;font-size:8.5pt;color:#6b6b6b}
 .st-title{text-align:end}
@@ -311,7 +311,7 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
   <div class="lwrap">
     <form class="lbox" id="lform" autocomplete="on">
       <div class="brand">
-        <div class="mark">RMG</div>
+        <div class="mark">REALME</div>
         <div><h1 data-t="appTitle"></h1><p data-t="loginSub"></p></div>
       </div>
       <label class="f" for="u" data-t="user"></label>
@@ -329,7 +329,7 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
 <section id="app" class="hide">
   <header>
     <div class="hrow">
-      <div class="mark">RMG</div>
+      <div class="mark">REALME</div>
       <h2 id="who"></h2>
       <select class="lang" aria-label="Language">
         <option value="ar">عربي</option><option value="en">EN</option><option value="zh">中文</option>
@@ -500,8 +500,8 @@ const I18N = {
   colNote:    ["ملاحظات", "Note", "备注"],
   stItem:     ["البند", "Item", "项目"],
   stIncCat:   ["الحوافز", "Incentives", "激励"],
-  coName:     ["RMG International", "RMG International", "RMG International"],
-  coSub:      ["الموزع المعتمد لهواتف realme في مصر — قسم التريد", "Authorized realme distributor in Egypt — Trade Department", "realme 埃及授权分销商 — 贸易部"],
+  coName:     ["قسم حسابات AR", "Accounts Receivable (AR)", "应收账款部 (AR)"],
+  coSub:      ["REALME مصر", "REALME Egypt", "REALME 埃及"],
   stMer:      ["التاجر", "Merchant", "商户"],
   stCode:     ["كود التاجر", "Merchant code", "商户代码"],
   stRegion:   ["المنطقة", "Region", "区域"],
@@ -526,7 +526,7 @@ const I18N = {
   stSig1:     ["إعداد", "Prepared by", "编制"],
   stSig2:     ["اعتماد", "Approved by", "审核"],
   stSig3:     ["توقيع وختم التاجر", "Merchant signature & stamp", "商户签字盖章"],
-  stFoot:     ["صادر من نظام حوافز RMG", "Generated by the RMG incentives system", "由 RMG 激励系统生成"],
+  stFoot:     ["صادر من نظام حوافز REALME", "Generated by the REALME incentives system", "由 REALME 激励系统生成"],
   stNone:     ["مفيش حركات في الفترة دي", "No entries in this period", "该期间无记录"],
   stXlErr:    ["مقدرتش أجهّز ملف Excel — اتأكد من النت وجرب تاني", "Couldn't prepare the Excel file — check the connection and try again", "无法生成 Excel 文件 — 请检查网络后重试"],
   debit:      ["مدين", "Debit", "借方"],
@@ -1247,7 +1247,7 @@ function stHtml(S){
   const f = v => fmt(v), dash = "—", dz = v => esc(v).replace(/(\d{4}-\d{2}-\d{2})/g, '<bdi class="num">$1</bdi>');
   return `<div class="st" dir="${lang === "ar" ? "rtl" : "ltr"}">
   <div class="st-top">
-    <div class="st-brand"><div class="st-logo">RMG</div><div><b>${esc(t("coName"))}</b><span>${esc(t("coSub"))}</span></div></div>
+    <div class="st-brand"><div class="st-logo">REALME</div><div><b>${esc(t("coName"))}</b><span>${esc(t("coSub"))}</span></div></div>
     <div class="st-title"><h1>${esc(t("ledTitle"))}</h1><span>${esc(t("stNo"))}: <span class="num">${esc(S.no)}</span></span></div>
   </div>
   <div class="st-mer"><b>${esc(S.m.name)}</b> <span class="num">(${esc(S.m.code)})</span>
@@ -1307,7 +1307,7 @@ function loadExcelJS(){
 }
 async function stXlsx(S){
   const X = await loadExcelJS();
-  const wb = new X.Workbook(); wb.creator = "RMG International"; wb.created = new Date();
+  const wb = new X.Workbook(); wb.creator = "REALME"; wb.created = new Date();
   const rtl = lang === "ar", F = "Arial", INK = "FF1D1D1F", MUTE = "FF6B6B6B", DARK = "FF26292E", YEL = "FFFFC915", LINE = "FFD9D9D9";
   const HEAD_ROW = 6;
   const ws = wb.addWorksheet(rtl ? "كشف حساب" : "Statement", {
@@ -1325,7 +1325,7 @@ async function stXlsx(S){
 
   // 1: الشركة | 2: التاجر (زي B-TECH: الاسم والكود في سطر واحد) | 3: بيانات | 4: شريط أصفر
   ws.mergeCells("A1:D1"); ws.mergeCells("E1:G1");
-  Object.assign(ws.getCell("A1"), {value: t("coName"), font: {name: F, size: 13, bold: true, color: {argb: INK}}, alignment: al()});
+  Object.assign(ws.getCell("A1"), {value: "REALME — " + t("coName"), font: {name: F, size: 13, bold: true, color: {argb: INK}}, alignment: al()});
   Object.assign(ws.getCell("E1"), {value: `${t("ledTitle")}  |  ${S.no}`, font: {name: F, size: 10, color: {argb: MUTE}}, alignment: al(rtl ? "left" : "right")});
   ws.mergeCells("A2:G2");
   Object.assign(ws.getCell("A2"), {value: `${S.m.name} (${S.m.code})`, font: {name: F, size: 15, bold: true, color: {argb: INK}}, alignment: al("center")});
