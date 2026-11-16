@@ -366,7 +366,7 @@ main{padding:14px 16px 48px;max-width:900px;margin:0 auto}
       <button class="back" id="bk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg><span data-t="stores"></span></button>
       <div id="spaper" class="paper hide"></div>
       <div class="hero">
-        <div><h3 id="sname"></h3><div class="meta" id="smeta"></div><div id="svat" class="vat hide"></div></div>
+        <div><h3 id="sname"></h3><div class="meta" id="smeta"></div><div id="svat" class="vat hide"></div> <div id="svatr" class="vat hide"></div></div>
         <div class="bx"><div class="lbl" data-t="avail"></div><div class="big num" id="sbal"></div></div>
         <div class="parts">
           <div><span data-t="opening"></span><b class="num" id="pOp"></b></div>
@@ -543,6 +543,9 @@ const I18N = {
   ledEnd:     ["الرصيد آخر الفترة", "Closing balance", "期末余额"],
   noLed:      ["مفيش حركات في الفترة دي", "No transactions in this period", "此期间没有交易"],
   vatOk:      ["🧾 قيمة مضافة لحد {0}", "🧾 VAT until {0}", "🧾 增值税有效至 {0}"],
+  vatRef:     ["فات {0}: {1}", "VAT {0}: {1}", "增值税 {0}：{1}"],
+  vatDone:    ["✔ اتسلّم {0}", "✔ paid {0}", "✔ 已发放 {0}"],
+  vatTodo:    ["⏳ لسه ماتسلّمش", "⏳ not paid yet", "⏳ 尚未发放"],
   vatYes:     ["🧾 عنده شهادة قيمة مضافة", "🧾 VAT registered", "🧾 已登记增值税"],
   vatExp:     ["⚠ شهادة القيمة المضافة انتهت {0}", "⚠ VAT certificate expired {0}", "⚠ 增值税证书已于 {0} 过期"],
   tplBtn:     ["📄 نماذج للتحميل (ورقة تكويد، عقد...)", "📄 Templates to download (forms, contracts...)", "📄 可下载模板（表格、合同等）"],
@@ -680,15 +683,17 @@ const CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentC
 $("rbtn").innerHTML = ICON_REFRESH;
 
 let tok = null, refreshTok = null, expAt = 0;
-let extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[], merchant_originals:[], collections:[]}, xsig = null, pane = "st", okind = "";
+let extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[], merchant_originals:[], collections:[], vat_refunds:[]}, xsig = null, pane = "st", okind = "";
 const EXTRA = {
   orders: "id,merchant_id,date,kind,doc_no,item_name,color,qty,price,amount,status,notes",
   bank_balances: "id,merchant_id,date,balance,notes,deposit,order_amount,incentive",
   invoices: "id,merchant_id,file_path,file_name,invoice_no,pages,created_at",
   merchant_docs: "id,merchant_id,doc_type,file_path,file_name,mime,size_kb,notes,created_at,created_by",
   merchant_originals: "id,merchant_id,doc_type,received,received_at,notes",
-  collections: "id,merchant_id,date,amount,method,notes"
+  collections: "id,merchant_id,date,amount,method,notes",
+  vat_refunds: "id,merchant_id,quarter,vat,eligible,delivered,delivered_at"
 };
+const NO_DEL = new Set(["merchant_originals", "vat_refunds"]);     // جداول مالهاش deleted_at
 async function extraSig(){
   const out = [];
   for (const tb in EXTRA){
@@ -700,7 +705,7 @@ async function extraSig(){
 async function fetchExtra(){
   const d = {};
   for (const tb in EXTRA){
-    try{ d[tb] = await getAll(`/rest/v1/${tb}?select=${EXTRA[tb]}${tb === "merchant_originals" ? "" : "&deleted_at=is.null"}&order=id`); }   // جدول الأصول مالوش deleted_at
+    try{ d[tb] = await getAll(`/rest/v1/${tb}?select=${EXTRA[tb]}${NO_DEL.has(tb) ? "" : "&deleted_at=is.null"}&order=id`); }   // جدول الأصول مالوش deleted_at
     catch(e){
       if (e.net) throw e; d[tb] = [];
       if (tb === "bank_balances"){   // السيرفر لسه من غير تحديث 5
@@ -775,7 +780,7 @@ $("lform").addEventListener("submit", async ev => {
 function showLogin(msg){
   stopPoll();
   tok = refreshTok = null; data = null; sig = null; changed = new Set(); cur = null;
-  extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[], merchant_originals:[], collections:[]}; xsig = null;
+  extra = {orders:[], bank_balances:[], invoices:[], merchant_docs:[], merchant_originals:[], collections:[], vat_refunds:[]}; xsig = null;
   $("app").classList.add("hide"); $("login").classList.remove("hide");
   $("u").value = LS.get("rmg_user") || "";
   $("lerr").textContent = msg || "";
@@ -1123,6 +1128,9 @@ function renderSt(){
   const today = new Date().toISOString().slice(0,10), vexp = m.vat && m.vatExp && m.vatExp < today;
   $("svat").classList.toggle("hide", !m.vat); $("svat").classList.toggle("bad", !!vexp);
   $("svat").textContent = !m.vat ? "" : vexp ? t("vatExp", m.vatExp) : m.vatExp ? t("vatOk", m.vatExp) : t("vatYes");
+  const vr = (extra.vat_refunds || []).filter(r => r.merchant_id === m.id && r.eligible).sort((a, b) => a.quarter < b.quarter ? 1 : -1)[0];
+  $("svatr").classList.toggle("hide", !vr);
+  $("svatr").textContent = !vr ? "" : t("vatRef", vr.quarter, fmt(vr.vat)) + " — " + (vr.delivered ? t("vatDone", vr.delivered_at || "") : t("vatTodo"));
   const cnt = n => n ? String(n) : "";
   $("cO").textContent = cnt(new Set(extra.orders.filter(r=>r.merchant_id===m.id).map(r=>r.kind+(r.doc_no||r.id))).size);
   $("cI").textContent = cnt(extra.invoices.filter(r=>r.merchant_id===m.id).length);

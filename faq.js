@@ -37,6 +37,15 @@ If you need a person, contact the admin team.`,
 
 const FAQ = [
   {
+    q_ar: "الفات (استرداد القيمة المضافة) بتاع التاجر اتسلّم ولا لا؟",
+    q_en: "Has the merchant's VAT refund been paid?",
+    keys: "فات استرداد قيمة مضافة ربع اتسلم اتصرف سلمنا vat refund quarter paid",
+    a_ar: `ادخل على المحل ← تحت اسمه هتلاقي «فات الربع: المبلغ» ومكتوب جنبه «✔ اتسلّم» بالتاريخ أو «⏳ لسه ماتسلّمش».
+الفات بيتحسب كل 3 شهور من الحوافز الجديدة اللي نزلت للتاجر في الربع، وبيظهر بس للتاجر اللي ليه فات (مسجّل قيمة مضافة وشهادته سارية).`,
+    a_en: `Open the store: under its name you'll see "VAT <quarter>: amount" with "✔ paid <date>" or "⏳ not paid yet".
+VAT is calculated every quarter from the new incentives granted in that quarter, and only shows for merchants who qualify (VAT-registered with a valid certificate).`,
+  },
+  {
     q_ar: "إزاي أدخل على الصفحة؟",
     q_en: "How do I sign in?",
     keys: "دخول ادخل يوزر يوزرنيم اسم المستخدم login sign username",
