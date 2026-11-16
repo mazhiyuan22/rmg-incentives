@@ -78,6 +78,8 @@
     hello: ["{greet} يا {name} 👋\nاسألني عن أي محل من محلاتك.", "{greet}, {name} 👋\nAsk me about any of your stores."],
     helloOut: ["أهلًا بيك 👋\nاسألني عن الدخول أو الحوافز.", "Welcome 👋\nAsk me about signing in or incentives."],
     tryLbl: ["جرّب:", "Try:"],
+    didYou: ["مش متأكد إني فهمت 🤔 تقصد واحد من دول؟", "Not sure I got that 🤔 Did you mean one of these?"],
+    alsoQ: ["أسئلة قريبة:", "Related questions:"],
     about: ["📍 على محل {0}", "📍 About {0}"],
     papOk: ["✔ مفيش مشكلة ورق متسجلة على المحل ده", "✔ No paperwork issue recorded for this store"],
     papBad: ["⚠ عليه مشكلة ورق: {0}", "⚠ Paperwork issue: {0}"], papBad0: ["مشكلة ورق", "paperwork issue"],
@@ -209,6 +211,95 @@
     welcome();
   }
 
+
+  // ---------- فهم أحسن: مرادفات + أخطاء الكتابة + بادئات/لواحق — من غير AI
+  // كل سطر: الكلمة اللي البوت بيفهمها  ←  الكلمات اللي ممكن الناس تكتبها بدلها
+  const SYN = {
+    "رصيد":     "فلوس باقي الباقي فاضل الفاضل متاح المتاح بالانس بلانس balance rased rasid raseed",
+    "حوافز":    "حافز الحافز بونص بونس بونيس مكافاه مكافات مكافآت انسنتف اينسنتف انسنتيف incentive incentives bonus 7afez 7awafez 7wafez hawafez",
+    "اوردرات":  "اوردر أوردر اوردرز طلبيه طلبيات طلبات طلبية مبيعات بيع شغل سحب سحوبات order orders sales ordr",
+    "مرتجعات":  "مرتجع مرتجعه رجوع رجع مرجوع مرتجعات returns return",
+    "صافي":     "الصافي net",
+    "ورق":      "ورقه ورقة الورق اوراق أوراق مستند مستندات papers paper documents docs wr2 war2",
+    "النهارده": "انهارده النهاردة انهاردة النهارد اليوم today nharda elnaharda",
+    "امبارح":   "إمبارح امبارحه امس أمس yesterday embare7",
+    "ازاي":     "إزاي ازاى ازي إزّاي كيف كيفية طريقه طريقة how ezay ezzay",
+    "كشف":      "statement ledger دائن مدين مديونيه مديونية",
+    "دخول":     "ادخل أدخل لوجين login باسورد password الباسورد كلمه كلمة يوزر username يوزرنيم sign",
+    "تكويد":    "اكود أكود كود_جديد فرعي فرع",
+    "فات":      "vat قيمه قيمة مضافه مضافة ضريبه ضريبة ضرايب",
+    "تحصيل":    "تحصيلات حصلت سدد سداد دفع دفعات collection collections",
+    "بنك":      "ايداع إيداع ايداعات تحويل تحويلات bank deposit",
+    "فاتوره":   "فاتورة فواتير invoice invoices",
+    "نماذج":    "نموذج تمبلت تمبليت template templates فورم form"
+  };
+  const SYN_REV = new Map(), VOCAB = new Set();
+  // كلمات مصري شائعة قريبة في الكتابة من كلمات مهمة («لاقي» ≈ «باقي») — مانصحّحهاش
+  const NOFUZZ = new Set(["لاقي", "لاقيه", "عارف", "عارفه", "شايف", "فاهم", "عامل", "ماشي", "حاجه", "حاجة", "خالص", "كده", "كدا",
+    "بقى", "بقي", "تاني", "برضه", "بردو", "اهو", "طيب", "تمام", "شكرا", "مرسي", "اوك", "ok"].map(N));
+  let synBuilt = null;
+  function buildSyn() {                     // المرادفات الأساسية + اللي في faq.js (BOT.synonyms)
+    const extraSyn = (CFG && CFG.synonyms) || {};
+    if (synBuilt === extraSyn) return;
+    synBuilt = extraSyn; SYN_REV.clear(); VOCAB.clear();
+    const all = Object.assign({}, SYN);
+    for (const [c, vs] of Object.entries(extraSyn)) all[c] = ((all[c] || "") + " " + vs).trim();
+    for (const [c, vs] of Object.entries(all)) {
+      VOCAB.add(N(c)); SYN[c] = SYN[c] || "";
+      for (const v of String(vs).split(/\s+/)) { const k = N(v.replace(/_/g, "")); if (k) { SYN_REV.set(k, c); VOCAB.add(k); } }
+    }
+    if (typeof STOP !== "undefined") { for (const k of SYN_REV.keys()) STOP.add(k); for (const c of Object.keys(all)) STOP.add(N(c)); }
+  }
+  const PRE = ["وال", "بال", "فال", "كال", "لل", "ال", "و", "ف", "ب", "ل"];
+  const SUF = ["هم", "ها", "كم", "نا", "ات", "ين", "ون", "يه", "ه", "ك", "ي"];
+  function forms(w) {                       // الكلمة + من غير بادئات/لواحق
+    const out = new Set([w]);
+    for (const p of PRE) if (w.startsWith(p) && w.length - p.length >= 3) out.add(w.slice(p.length));
+    for (const x of [...out]) for (const sf of SUF) if (x.endsWith(sf) && x.length - sf.length >= 3) out.add(x.slice(0, -sf.length));
+    return [...out];
+  }
+  function lev(a, b, max) {                 // عدد الحروف المختلفة (بيقف بدري لو عدّى الحد)
+    if (Math.abs(a.length - b.length) > max) return max + 1;
+    let prev = Array.from({length: b.length + 1}, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i]; let best = i;
+      for (let j = 1; j <= b.length; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        if (cur[j] < best) best = cur[j];
+      }
+      if (best > max) return max + 1;
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+  const tol = w => (w.length >= 7 ? 2 : w.length >= 4 ? 1 : 0);
+  function canonWord(w) {                   // كلمة ← الكلمة اللي البوت بيفهمها (لو ليها مرادف)
+    for (const f of forms(w)) { if (SYN_REV.has(f)) return SYN_REV.get(f); if (SYN[f] !== undefined) return f; }
+    const t = tol(w);
+    if (!t || NOFUZZ.has(w)) return null;
+    let best = null, bd = t + 1;
+    for (const v of VOCAB) { if (v.length < 4) continue; const d = lev(w, v, t); if (d < bd) { bd = d; best = v; } }
+    return best ? (SYN_REV.get(best) || best) : null;
+  }
+  let _sw = null, _swFor = null;
+  function storeWords() {
+    if (!(typeof data !== "undefined" && data && data.ms)) return new Set();
+    if (_swFor !== data.ms) { _swFor = data.ms; _sw = new Set(data.ms.flatMap(m => W(`${m.code} ${m.name} ${m.region}`)).filter(w => w.length >= 3)); }
+    return _sw;
+  }
+  function canon(q) {                       // السؤال + الكلمات اللي فهمها (بيتضافوا في الآخر)
+    const raw = String(q).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/الشهر دا\b/g, "الشهر ده");
+    const add = new Set();
+    for (const tok of raw.split(/\s+/)) {
+      const w = N(tok);
+      if (w.length < 2 || /^\d+$/.test(w)) continue;
+      if (storeWords().has(w)) continue;                                      // كود أو اسم محل — سيبه زي ما هو
+      const c = canonWord(w);
+      if (c && !N(raw).includes(N(c))) add.add(c);
+    }
+    return add.size ? raw + " " + [...add].join(" ") : raw;
+  }
+
   // ---------- فهم السؤال
   const STOP = new Set(["رصيد", "محل", "المحل", "كام", "بكام", "ايه", "عايز", "اعرف", "كشف", "حساب", "بتاع", "بتاعه", "لمحل", "في",
     "حوافز", "حافز", "اوردرات", "اوردر", "أوردرات", "أوردر", "مرتجعات", "مرتجع", "صافي", "عمل", "عامل", "عملت", "شهر", "يوم", "النهارده",
@@ -218,6 +309,7 @@
     "بطاقه", "بطاقة", "ضريبيه", "ضريبية", "سجل", "تجاري", "عقد", "العقد", "اخطار", "إخطار", "اقرار", "إقرار", "اصول", "أصول", "الاصل", "الأصل",
     "وصل", "وصلت", "استلمنا", "طيب", "و", "بقى", "paper", "papers", "documents", "ok", "complete", "his", "its"].map(N));
 
+  buildSyn();
   function findStores(q) {
     const nq = N(q), out = [];
     for (const m of data.ms) {
@@ -229,7 +321,18 @@
       "january","february","march","april","may","june","july","august","september","october","november","december"].map(N));
     const ws = W(q).filter(w => w.length >= 2 && !STOP.has(w) && !MN.has(w) && !/^\d{1,4}$/.test(w));
     if (!ws.length) return [];
-    return data.ms.filter(m => { const h = N(`${m.name} ${m.region}`); return ws.every(w => h.includes(w)); });
+    const exact = data.ms.filter(m => { const h = N(`${m.name} ${m.region}`); return ws.every(w => h.includes(w)); });
+    if (exact.length) return exact;
+    // اسم مكتوب عربي والمحل متسجل إنجليزي (أو العكس): «جودة» ↔ «Gouda» — بنقارن الحروف الساكنة بس
+    const sk = ws.map(skel).filter(x => x.length >= 2);
+    if (!sk.length || sk.length < ws.length) return [];
+    return data.ms.filter(m => { const ns = W(`${m.name} ${m.region}`).map(skel); return sk.every(k => ns.includes(k)); });
+  }
+  const TR = {"ا":"","ب":"b","ت":"t","ث":"s","ج":"g","ح":"h","خ":"kh","د":"d","ذ":"z","ر":"r","ز":"z","س":"s","ش":"sh","ص":"s",
+              "ض":"d","ط":"t","ظ":"z","ع":"","غ":"gh","ف":"f","ق":"k","ك":"k","ل":"l","م":"m","ن":"n","ه":"","و":"","ي":"","ء":""};
+  function skel(w) {                        // هيكل الحروف الساكنة: «جوده»→gd  «gouda»→gd  «طنطا»→tnt  «tanta»→tnt
+    let x = /[\u0600-\u06FF]/.test(w) ? [...w].map(c => TR[c] ?? "").join("") : w.toLowerCase();
+    return x.replace(/q/g, "k").replace(/c(?=[eiy])/g, "s").replace(/c/g, "k").replace(/ph/g, "f").replace(/[aeiouwyh]/g, "").replace(/(.)\1+/g, "$1");
   }
   function storeCard(m) {
     const b = typeof lastBank === "function" ? lastBank(m.id) : null;
@@ -240,16 +343,30 @@
       ${m.bad ? `<span class="r" style="color:var(--red,#C2362B)">⚠ ${E(m.note || (ar() ? "مشكلة ورق" : "Paperwork issue"))}</span>` : ""}
       <button type="button" data-open="${m.id}">${E(u("open"))}</button></span>`;
   }
+  const FILLER = new Set(["في", "من", "على", "عن", "ايه", "اي", "انا", "انت", "هو", "هي", "ده", "دي", "دا", "اللي", "لو", "مش",
+    "عايز", "عاوز", "محتاج", "ممكن", "يا", "و", "او", "ولا", "مع", "لما", "عشان", "علشان", "ازاي", "هل", "the", "a", "to", "is", "i", "my"].map(N));
+  function rankFaq(q) {                     // كل الأسئلة مترتبة حسب القرب من سؤال المستخدم
+    const qs = [...new Set(W(q).filter(w => w.length >= 2 && !FILLER.has(w)))];
+    if (!qs.length || !QA.length) return [];
+    const docs = QA.map(item => new Set(W(`${item.keys || ""} ${item.q_ar || ""} ${item.q_en || ""}`)
+      .filter(t => t.length >= 2).flatMap(forms)));
+    const df = w => docs.filter(d => d.has(w)).length;
+    return QA.map((item, i) => {
+      const d = docs[i]; let sc = 0;
+      for (const w of qs) {
+        const fs = forms(w), idf = Math.log(1 + QA.length / (1 + Math.min(...fs.map(df))));
+        if (fs.some(f => d.has(f))) { sc += idf; continue; }
+        let hit = false;
+        if (w.length >= 3) for (const t of d) { if (t.length >= 3 && (t.includes(w) || w.includes(t))) { hit = true; break; } }
+        if (!hit && tol(w)) for (const t of d) { if (t.length >= 4 && lev(w, t, tol(w)) <= tol(w)) { hit = true; break; } }
+        if (hit) sc += idf * 0.6;
+      }
+      return {item, sc};
+    }).filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc);
+  }
   function bestFaq(q) {
-    const qs = W(q).filter(w => w.length >= 2);
-    let best = null, top = 0;
-    for (const item of QA) {
-      const toks = W(`${item.keys || ""} ${item.q_ar || ""} ${item.q_en || ""}`).filter(t => t.length >= 2);
-      let s = 0;
-      for (const w of qs) if (toks.some(t => t === w || (w.length >= 3 && (t.includes(w) || w.includes(t)) && t.length >= 3))) s++;
-      if (s > top) { top = s; best = item; }
-    }
-    return top ? best : null;
+    const r = rankFaq(q);
+    return r.length && r[0].sc >= 0.9 ? r[0].item : null;
   }
   // ---------- التواريخ (يوم / شهر)
   const MONTHS = [["يناير","jan"],["فبراير","feb"],["مارس","mar"],["ابريل","أبريل","apr"],["مايو","may"],["يونيو","jun"],
@@ -373,6 +490,9 @@
     if (pend) {                                   // تكملة لسؤال قبله
       if (!pend.stores) { const s2 = storesFrom(q); if (s2 === "many") return true; if (s2) { pend.stores = s2; cont(); return true; } }
       else if (pend.intent === "orders" && !pend.per) {
+        const s3 = /اوردر|حافز|رصيد|ورق|order/i.test(q) ? null : storesFrom(q);   // كتب اسم محل بدل التاريخ ← غيّر المحل وكمّل
+        if (s3 === "many") return true;
+        if (s3) { pend.stores = s3; pend.fromCtx = false; pend.per = parsePeriod(q); cont(); return true; }
         const per = parsePeriod(q);
         if (per) { pend.per = per; cont(); return true; }
         if (!intent) { add("bot", E(u("badPeriod"))); periodChips(); return true; }
@@ -393,8 +513,9 @@
     cont(); return true;
   }
 
-  function answer(q) {
-    const nq = N(q);
+  function answer(q0) {
+    buildSyn();
+    const q = canon(q0), nq = N(q);
     if (/شرح|اشرح|علمني|تعليمات|جوله|tutorial|tour|guide|walkthrough/i.test(nq)) return startTour();
     const asksMeaning = /معناها|يعني|mean/.test(q);
     if (loggedIn() && !asksMeaning) {
@@ -411,9 +532,15 @@
       if (!/ازاي|إزاي|اكود|أكود|تكويد|ليه|امتى|إمتى|معاد|how|why|when/.test(q) && dataAnswer(q)) return;
       if (/رصيد|balance/i.test(q) && W(q).some(w => w.length >= 2 && !STOP.has(w))) return add("bot", E(u("nostore")));
     }
-    const f = bestFaq(q);
-    if (f) return add("bot", E(L(f, "a")));
+    const r = rankFaq(q);
+    if (r.length && r[0].sc >= 0.9) {
+      add("bot", E(L(r[0].item, "a")));
+      const near = r.slice(1, 3).filter(x => x.sc >= r[0].sc * 0.8);
+      if (near.length) chips(near.map(x => x.item), u("alsoQ"));
+      return;
+    }
     if (!loggedIn() && /رصيد|balance|\d{4,}/i.test(nq)) return add("bot", E(u("login")));
+    if (r.length) return chips(r.slice(0, 3).map(x => x.item), u("didYou"));
     add("bot", E(L(CFG, "not_found")));
     chips(starters());
   }

@@ -26,6 +26,13 @@ Ask me about any of your stores and I'll pull up the numbers right away.`,
 عندك مشكلة في الدخول أو سؤال عن الحوافز؟ اسألني.`,
   welcome_out_en: `Welcome 👋
 Trouble signing in, or a question about incentives? Ask me.`,
+  // مرادفات: لو الناس بتكتب كلمة البوت مش فاهمها، ضيفها جنب الكلمة اللي البوت بيفهمها (مسافة بين كل كلمة)
+  // الكلمات اللي البوت بيفهمها: رصيد حوافز اوردرات مرتجعات صافي ورق النهارده امبارح ازاي كشف دخول تكويد فات تحصيل بنك فاتوره نماذج
+  synonyms: {
+    "رصيد":   "",
+    "حوافز":  "",
+    "اوردرات": "",
+  },
   // أزرار «جرّب» — بتتبعت للبوت كأنها سؤال اتكتب
   try_ar: ["💰 حوافز كل محلاتي", "📦 صافي أوردرات كل المحلات النهارده", "📄 مين ورقه ناقص؟", "🧾 كشف حساب تفصيلي"],
   try_en: ["💰 Incentives for all my stores", "📦 Net orders for all stores today", "📄 Who has missing papers?", "🧾 Detailed statement"],
