@@ -725,6 +725,7 @@ const I18N = {
   ledDesc:    ["مدين = الأوردرات.  دائن = المرتجعات + التحصيلات + إيداعات البنك + فواتير الحوافز.  الرصيد = دائن − مدين (بالسالب يبقى على التاجر). الحافز المستخدم سطر للبيان بس.", "Debit = orders.  Credit = returns + collections + bank deposits + incentive invoices.  Balance = credit − debit (negative = owed by the merchant). Used incentives are shown for reference only.", "借方 = 订单。贷方 = 退货 + 收款 + 银行存款 + 激励发票。余额 = 贷方 − 借方（负数 = 商户欠款）。已使用激励仅供参考。"],
   kInc:       ["فاتورة حافز", "Incentive invoice", "激励发票"],
   kIncOp:     ["رصيد حوافز سابق", "Incentives carried over", "结转激励"],
+  kVat:       ["استرداد قيمة مضافة (فات)", "VAT refund", "增值税退款"],
   incBox:     ["الحوافز في الفترة:", "Incentives in period:", "期间激励："],
   incIn:      ["نزلت", "Granted", "发放"],
   incLeft:    ["الباقي", "Remaining", "剩余"],
@@ -1526,7 +1527,8 @@ function ledgerRows(m, a, b){
   for (const r of extra.bank_balances) if (r.merchant_id === m.id){ const dep = bankParts(r)[0]; if (dep) ev.push({d:r.date, o:3, i:r.id, k:"kDep", ref:r.notes||"", dr:0, cr:dep}); }
   m.tx.forEach((r, i) => {
     const n = /\.(xlsx|xlsm|xls)$/i.test(r.notes) ? "" : r.notes;
-    if (r.type === "incentive" || r.type === "opening") ev.push({d:r.date, o:4, i, k:r.type === "opening" ? "kIncOp" : "kInc", ref:"", note:n, dr:0, cr:r.amount, inc:r.amount});
+    const vat = r.type === "incentive" && /^استرداد قيمة مضافة/.test(r.notes || "");     // الفات المعتمدة: دائن للتاجر
+    if (r.type === "incentive" || r.type === "opening") ev.push({d:r.date, o:4, i, k:r.type === "opening" ? "kIncOp" : vat ? "kVat" : "kInc", ref:"", note:n, dr:0, cr:r.amount, inc:r.amount});
     else if (r.type === "usage") ev.push({d:r.date, o:5, i, k:"kUsed", ref:"", note:n, dr:0, cr:0, used:r.amount, inc:-r.amount});
   });
   ev.sort((x, y) => (x.d < y.d ? -1 : x.d > y.d ? 1 : x.o - y.o || x.i - y.i));
@@ -1539,11 +1541,11 @@ function ledgerRows(m, a, b){
     out.push({date:e.d, kind:e.k, ref:e.ref || "", note:e.note || "", dr:e.dr, cr:e.cr, used:e.used || 0, bal:run, inc: e.inc ? incRun : null});
   }
   const sum = (k, f) => out.filter(r => k.includes(r.kind)).reduce((s, r) => s + r[f], 0);
-  const incIn = sum(["kInc", "kIncOp"], "cr"), incUsed = sum(["kUsed"], "used");
+  const incIn = sum(["kInc", "kIncOp", "kVat"], "cr"), incUsed = sum(["kUsed"], "used");
   return {opening, rows:out, end: out.length ? out[out.length-1].bal : opening,
           inc:{open:incOpen, in:incIn, used:incUsed, left:incOpen + incIn - incUsed},
           cats:[["kOrder", sum(["kOrder"], "dr"), 0], ["kReturn", 0, sum(["kReturn"], "cr")], ["kColl", 0, sum(["kColl"], "cr")],
-                ["kDep", 0, sum(["kDep"], "cr")], ["kInc", 0, incIn]]};
+                ["kDep", 0, sum(["kDep"], "cr")], ["kInc", 0, sum(["kInc", "kIncOp"], "cr")], ["kVat", 0, sum(["kVat"], "cr")]]};
 }
 const ledSide = v => v < -0.004 ? t("owes") : v > 0.004 ? t("owed") : "";
 function rowNote(r){

@@ -6,90 +6,78 @@
 (() => {
 const PRODUCTS = [
   // ---------------- سلسلة الأرقام ----------------
-  {id:"16pp", name:"realme 16 Pro+ 5G", series:"num", tag_ar:"كاميرا 200 ميجا وتقريب بصري 3.5x", tag_en:"200MP camera with 3.5x optical zoom",
+  {id:"16pp", img:"https://image01.realme.net/general/20260708/1783497717303063ce5fe25e7437aa41e90c8a4d0d6b3.webp", name:"realme 16 Pro+ 5G", series:"num", tag_ar:"كاميرا 200 ميجا وتقريب بصري 3.5x", tag_en:"200MP camera with 3.5x optical zoom",
    chip:"Snapdragon 7 Gen 4 (4nm)", display:"6.8\" AMOLED 1.5K", hz:144, nits:"6500 nit", ram:"8/12GB", rom:"128/256/512GB",
    cams:["200MP رئيسية (OIS)","50MP تليفوتو 3.5x","8MP عريضة"], front:"50MP", batt:7000, w:80, ip:"IP66/68/69", weight:"198g", thick:"8.49mm",
    cool:"غرفة تبريد بخار (VC)", colors:[["Master Gold","#C9A86A"],["Pebble Grey","#7D8188"]], accent:"#C9A86A", cam:"ring3"},
-  {id:"16p", name:"realme 16 Pro 5G", series:"num", tag_ar:"200 ميجا LumaColor وبطارية 7000", tag_en:"200MP LumaColor camera, 7000mAh",
+  {id:"16p", img:"https://image01.realme.net/general/20260708/1783497811255c39bb1e6268345fda4cb2f49a429e510.webp", name:"realme 16 Pro 5G", series:"num", tag_ar:"200 ميجا LumaColor وبطارية 7000", tag_en:"200MP LumaColor camera, 7000mAh",
    chip:"Dimensity 7300 Max (4nm)", display:"6.78\" AMOLED 1.5K", hz:144, nits:"6500 nit", ram:"8/12GB", rom:"128/256/512GB",
    cams:["200MP رئيسية (OIS)","8MP عريضة"], front:"50MP", batt:7000, w:80, ip:"IP66/68/69", weight:"192g", thick:"7.75mm",
    cool:"غرفة تبريد بخار (VC)", colors:[["Master Gold","#C9A86A"],["Pebble Grey","#7D8188"]], accent:"#B8935A", cam:"ring2"},
-  {id:"16", name:"realme 16 5G", series:"num", tag_ar:"تصميم خفيف 8.1 مم ببطارية 7000", tag_en:"8.1mm light design with 7000mAh",
+  {id:"16", img:"https://image01.realme.net/general/20260708/1783497332206cf10b2e6a0ec48ea90db9820e335ffea.png", name:"realme 16 5G", series:"num", tag_ar:"تصميم خفيف 8.1 مم ببطارية 7000", tag_en:"8.1mm light design with 7000mAh",
    chip:"Dimensity 6400 Turbo (6nm)", display:"6.57\" AMOLED FHD+", hz:120, nits:"4200 nit", ram:"8/12GB", rom:"128/256GB",
    cams:["50MP رئيسية","2MP"], front:"50MP", batt:7000, w:60, ip:"IP66/68/69", weight:"183g", thick:"8.1mm",
    cool:"ألواح جرافيت", colors:[["Silver","#C7CBD1"],["Black","#2B2E33"]], accent:"#9AA4B2", cam:"pill2"},
-  {id:"15p", name:"realme 15 Pro 5G", series:"num", tag_ar:"كل الكاميرات 50 ميجا وتصوير 4K 60", tag_en:"All 50MP cameras, 4K 60fps",
+  {id:"15p", img:"https://image01.realme.net/general/20250908/17573178330447e67aa80a81b41ada0156973ee9c36c8.png", name:"realme 15 Pro 5G", series:"num", tag_ar:"كل الكاميرات 50 ميجا وتصوير 4K 60", tag_en:"All 50MP cameras, 4K 60fps",
    chip:"Snapdragon 7 Gen 4 (4nm)", display:"6.8\" AMOLED 1.5K منحنية", hz:144, nits:"6500 nit", ram:"8/12GB", rom:"128/256/512GB",
    cams:["50MP Sony IMX896 (OIS)","50MP عريضة"], front:"50MP", batt:7000, w:80, ip:"IP66/68/69", weight:"187g", thick:"7.69mm",
    cool:"غرفة تبريد بخار (VC)", colors:[["Flowing Silver","#D5D8DD"],["Velvet Green","#2F5D50"]], accent:"#2F5D50", cam:"sq2"},
-  {id:"15", name:"realme 15 5G", series:"num", tag_ar:"50 ميجا أمامي وخلفي و7000 مللي", tag_en:"Dual 50MP front & rear, 7000mAh",
+  {id:"15", img:"https://image01.realme.net/general/20250908/17573178434983e505494534e4d7485ef15e9c51cb745.png", name:"realme 15 5G", series:"num", tag_ar:"50 ميجا أمامي وخلفي و7000 مللي", tag_en:"Dual 50MP front & rear, 7000mAh",
    chip:"Dimensity 7300+ (4nm)", display:"6.8\" AMOLED", hz:144, nits:"6500 nit", ram:"8/12GB", rom:"128/256GB",
    cams:["50MP Sony IMX882 (OIS)","8MP عريضة"], front:"50MP", batt:7000, w:80, ip:"IP66/68/69", weight:"187g", thick:"7.66mm",
    cool:"غرفة تبريد بخار 7000 مم²", colors:[["Silk Pink","#E7C3CB"],["Suit Titanium","#8C8F94"]], accent:"#D8A8B4", cam:"sq2"},
-  {id:"15t", name:"realme 15T 5G", series:"num", tag_ar:"شاشة 4000 nit ومقاومة IP69", tag_en:"4000-nit display, IP69",
-   chip:"Dimensity 6400 Max (6nm)", display:"6.57\" AMOLED FHD+", hz:120, nits:"4000 nit", ram:"8/12GB", rom:"128/256GB",
-   cams:["50MP رئيسية","2MP"], front:"50MP", batt:7000, w:60, ip:"IP66/68/69", weight:"181g", thick:"7.79mm",
-   cool:"ألواح جرافيت", colors:[["Suit Titanium","#8C8F94"],["Flowing Silver","#D5D8DD"]], accent:"#8C8F94", cam:"sq2"},
   // ---------------- سلسلة P ----------------
-  {id:"p4pw", name:"realme P4 Power 5G", series:"p", tag_ar:"بطارية 10001 مللي أمبير", tag_en:"10,001mAh battery",
-   chip:"Dimensity 7400 Ultra (4nm)", display:"6.8\" AMOLED 1.5K منحنية", hz:144, nits:"6500 nit", ram:"8/12GB", rom:"128/256GB",
-   cams:["50MP Sony (OIS)","8MP عريضة"], front:"16MP", batt:10001, w:80, ip:"IP66/68/69", weight:"219g", thick:"9.08mm",
-   cool:"غرفة تبريد بخار (VC)", colors:[["TransSilver","#C9CED6"],["TransOrange","#E0763A"]], accent:"#E0763A", cam:"sq2"},
-  {id:"p4x", name:"realme P4x 5G", series:"p", tag_ar:"Dimensity 7400 Ultra وتبريد VC", tag_en:"Dimensity 7400 Ultra with VC cooling",
-   chip:"Dimensity 7400 Ultra (4nm)", display:"6.72\" LCD FHD+", hz:144, nits:"1000 nit", ram:"6/8GB", rom:"128/256GB",
-   cams:["50MP رئيسية","2MP"], front:"8MP", batt:7000, w:45, ip:"IP64", weight:"208g", thick:"8.39mm",
-   cool:"غرفة تبريد بخار 5300 مم²", colors:[["Matte Silver","#CFD3D8"],["Lake Green","#4E8C7A"]], accent:"#4E8C7A", cam:"sq2", note_ar:"فيه إصدار 4G بمواصفات مختلفة في بعض الأسواق"},
   // ---------------- سلسلة C ----------------
-  {id:"c100x", name:"realme C100x", series:"c", tag_ar:"بطارية 8000 وتحمّل سقوط 2 متر", tag_en:"8000mAh, 2m drop resistance",
+  {id:"c100x", img:"https://image01.realme.net/general/20260928/179058562656509643ad64b2440aa9469719407d73518.png", name:"realme C100x", series:"c", tag_ar:"بطارية 8000 وتحمّل سقوط 2 متر", tag_en:"8000mAh, 2m drop resistance",
    chip:"Unisoc T7250", display:"6.8\" LCD HD+", hz:120, nits:"900 nit", ram:"4/6GB", rom:"64/128/256GB",
    cams:["50MP رئيسية"], front:"5MP", batt:8000, w:45, ip:"IP64", weight:"219g", thick:"8.78mm",
    cool:"ألواح جرافيت", colors:[["Golden Coast","#D8B56A"],["Deepblue Tides","#1F3E66"]], accent:"#D8B56A", cam:"sq1"},
-  {id:"c100", name:"realme C100", series:"c", tag_ar:"بطارية ضخمة وشاشة 6.8 بوصة", tag_en:"Huge battery, 6.8\" display",
+  {id:"c100", img:"https://image01.realme.net/general/20260928/17905838676604654ee1630d2462c975cbc40a4aa6dae.png", name:"realme C100", series:"c", tag_ar:"بطارية ضخمة وشاشة 6.8 بوصة", tag_en:"Huge battery, 6.8\" display",
    chip:"Helio G92 Max (4G) / Dimensity 6300 (5G)", display:"6.8\" LCD HD+", hz:120, nits:"—", ram:"4/6/8GB", rom:"128/256GB",
    cams:["50MP رئيسية"], front:"5–8MP", batt:8000, w:45, ip:"—", weight:"224g", thick:"8.9mm",
    cool:"ألواح جرافيت", colors:[["Glory White","#E9E6DF"],["Black","#2B2E33"]], accent:"#BFB8A8", cam:"sq1", note_ar:"البطارية والمعالج بيختلفوا حسب الإصدار (4G أو 5G)"},
-  {id:"c100i", name:"realme C100i", series:"c", tag_ar:"شاشة 120Hz وبطارية كبيرة", tag_en:"120Hz display, big battery",
+  {id:"c100i", img:"https://image01.realme.net/general/20260818/1787035856316af36ff02108b4b79afbd996cb4e0a019.webp", name:"realme C100i", series:"c", tag_ar:"شاشة 120Hz وبطارية كبيرة", tag_en:"120Hz display, big battery",
    chip:"Unisoc T7250", display:"6.8\" LCD HD+", hz:120, nits:"900 nit", ram:"4/6GB", rom:"64/128/256GB",
    cams:["8MP","2MP"], front:"5MP", batt:7000, w:15, ip:"—", weight:"208g", thick:"8.38mm",
    cool:"ألواح جرافيت", colors:[["Skyline Silver","#C9CDD3"],["Midnight Black","#23262B"]], accent:"#9097A1", cam:"sq2", note_ar:"البطارية 6500–7000 حسب السوق"},
-  {id:"c85p", name:"realme C85 Pro", series:"c", tag_ar:"AMOLED 4000 nit ومقاومة IP69", tag_en:"4000-nit AMOLED, IP69",
+  {id:"c85p", img:"https://image01.realme.net/general/20251205/1764919658111a4b039eb64844ab589eaf15c07567f50.webp", name:"realme C85 Pro", series:"c", tag_ar:"AMOLED 4000 nit ومقاومة IP69", tag_en:"4000-nit AMOLED, IP69",
    chip:"Snapdragon 685 (6nm)", display:"6.8\" AMOLED FHD+", hz:120, nits:"4000 nit", ram:"8GB", rom:"128/256GB",
    cams:["50MP رئيسية"], front:"8MP", batt:7000, w:45, ip:"IP66/68/69", weight:"205g", thick:"7.79mm",
    cool:"ألواح جرافيت", colors:[["Parrot Purple","#6E4A9E"],["Peacock Green","#1F6B5C"]], accent:"#6E4A9E", cam:"sq1"},
-  {id:"c85", name:"realme C85 5G", series:"c", tag_ar:"5G وشاشة 144Hz وIP69", tag_en:"5G, 144Hz display, IP69",
+  {id:"c85", img:"https://image01.realme.net/general/20260113/1768302752068811c3ea0622040a5a5861dfd2fda0e19.webp", name:"realme C85 5G", series:"c", tag_ar:"5G وشاشة 144Hz وIP69", tag_en:"5G, 144Hz display, IP69",
    chip:"Dimensity 6300 (6nm)", display:"6.8\" LCD HD+", hz:144, nits:"1200 nit", ram:"4/6/8GB", rom:"128/256GB",
    cams:["50MP Sony IMX852"], front:"8MP", batt:7000, w:45, ip:"IP66/68/69", weight:"215g", thick:"—",
    cool:"ألواح جرافيت", colors:[["Parrot Purple","#6E4A9E"],["Peacock Green","#1F6B5C"]], accent:"#1F6B5C", cam:"sq1"},
-  {id:"c75", name:"realme C75", series:"c", tag_ar:"أول موبايل مقاوم للكسر بمعايير عسكرية", tag_en:"Military-grade toughness, IP69",
+  {id:"c75", img:"https://image01.realme.net/general/20250217/1739782851017a9a0f2598eea4f9e9ba286a73b6650b3.png", name:"realme C75", series:"c", tag_ar:"أول موبايل مقاوم للكسر بمعايير عسكرية", tag_en:"Military-grade toughness, IP69",
    chip:"Helio G92 Max", display:"6.72\" LCD FHD+", hz:90, nits:"—", ram:"8GB", rom:"128/256GB",
    cams:["50MP رئيسية"], front:"8MP", batt:6000, w:45, ip:"IP69", weight:"—", thick:"—",
    cool:"ألواح جرافيت", colors:[["Gold","#CDAE6E"],["Black","#2B2E33"]], accent:"#CDAE6E", cam:"sq2"},
-  {id:"c75x", name:"realme C75x", series:"c", tag_ar:"IP69 وشاشة 120Hz", tag_en:"IP69 with 120Hz display",
+  {id:"c75x", img:"https://image01.realme.net/general/20250901/1756697841749884ebf9b405c4fb7b51902eea15810ab.png", name:"realme C75x", series:"c", tag_ar:"IP69 وشاشة 120Hz", tag_en:"IP69 with 120Hz display",
    chip:"Helio G81 Ultra", display:"6.67\" LCD HD+", hz:120, nits:"—", ram:"6/8GB", rom:"128GB",
    cams:["50MP رئيسية"], front:"5MP", batt:5600, w:45, ip:"IP68/69", weight:"—", thick:"—",
    cool:"ألواح جرافيت", colors:[["Coral Pink","#E8A69A"],["Oceanic Blue","#2C5D8F"]], accent:"#2C5D8F", cam:"sq2"},
-  {id:"c71", name:"realme C71", series:"c", tag_ar:"6300 مللي وشحن 45 وات في جسم 7.79 مم", tag_en:"6300mAh, 45W in a 7.79mm body",
+  {id:"c71", img:"https://image01.realme.net/general/20250901/1756697848660a4a8118283054c9da82f6018df35cabb.png", name:"realme C71", series:"c", tag_ar:"6300 مللي وشحن 45 وات في جسم 7.79 مم", tag_en:"6300mAh, 45W in a 7.79mm body",
    chip:"Unisoc T7250", display:"6.67\" LCD HD+", hz:120, nits:"625 nit", ram:"4/6/8GB", rom:"64/128/256GB",
    cams:["50MP رئيسية"], front:"5MP", batt:6300, w:45, ip:"—", weight:"196g", thick:"7.79mm",
    cool:"ألواح جرافيت", colors:[["Black","#2B2E33"],["Green","#5E8C6A"]], accent:"#5E8C6A", cam:"sq1"},
   // ---------------- سلسلة Note ----------------
-  {id:"n70", name:"realme Note 70", series:"note", tag_ar:"6300 مللي وصوت 300%", tag_en:"6300mAh, 300% ultra volume",
+  {id:"n70", img:"https://image01.realme.net/general/20251031/17618970427299e064efa9fda428b8dc9facb9ed64729.webp", name:"realme Note 70", series:"note", tag_ar:"6300 مللي وصوت 300%", tag_en:"6300mAh, 300% ultra volume",
    chip:"Unisoc T7250", display:"6.74\" LCD HD+", hz:90, nits:"563 nit", ram:"4/6GB", rom:"64/128/256GB",
    cams:["13MP رئيسية"], front:"5MP", batt:6300, w:15, ip:"IP54", weight:"201g", thick:"7.94mm",
    cool:"ألواح جرافيت", colors:[["Beach Gold","#D7BC86"],["Obsidian Black","#22252A"]], accent:"#D7BC86", cam:"sq1"},
-  {id:"n60x", name:"realme Note 60x", series:"note", tag_ar:"هيكل ألمنيوم وحماية ArmorShell", tag_en:"Aluminium frame, ArmorShell protection",
+  {id:"n60x", img:"https://image01.realme.net/general/20250313/1741856661863a075deb261604e9d97e3b4692ed397d0.png", name:"realme Note 60x", series:"note", tag_ar:"هيكل ألمنيوم وحماية ArmorShell", tag_en:"Aluminium frame, ArmorShell protection",
    chip:"Unisoc T612", display:"6.74\" LCD HD+", hz:90, nits:"—", ram:"3/4GB", rom:"64/128GB",
    cams:["8MP"], front:"5MP", batt:5000, w:10, ip:"IP54", weight:"187g", thick:"7.8mm",
    cool:"ألواح جرافيت", colors:[["Wilderness Green","#4F6B4A"],["Marble Black","#24272B"]], accent:"#4F6B4A", cam:"sq1"},
   // ---------------- سماعات ----------------
-  {id:"ba6p", name:"realme Buds Air6 Pro", series:"audio", kind:"buds", tag_ar:"عزل ضوضاء 50dB وسماعتين في كل جهة", tag_en:"50dB ANC with coaxial dual drivers",
+  {id:"ba6p", img:"https://image01.realme.net/general/20250217/173978312952346e8b3a1918048f592f3e1d8cb8c787e.png", name:"realme Buds Air6 Pro", series:"audio", kind:"buds", tag_ar:"عزل ضوضاء 50dB وسماعتين في كل جهة", tag_en:"50dB ANC with coaxial dual drivers",
    driver:"11mm woofer + 6mm tweeter", anc:"50dB", play:"حتى 40 ساعة مع العلبة", ip:"IP55", bt:"5.3", codec:"LDAC", accent:"#7E9CC9"},
-  {id:"ba6", name:"realme Buds Air6", series:"audio", kind:"buds", tag_ar:"سماعة 12.4 مم و50dB ANC", tag_en:"12.4mm driver, 50dB ANC",
+  {id:"ba6", img:"https://image01.realme.net/general/20250217/1739783122373f286aef0aca0450da486bafa1aa90e38.png", name:"realme Buds Air6", series:"audio", kind:"buds", tag_ar:"سماعة 12.4 مم و50dB ANC", tag_en:"12.4mm driver, 50dB ANC",
    driver:"12.4mm", anc:"50dB", play:"حتى 40 ساعة مع العلبة", ip:"IP55", bt:"5.3", codec:"LHDC 5.0", accent:"#9DB7A6"},
-  {id:"t110", name:"realme Buds T110", series:"audio", kind:"buds", tag_ar:"مكالمات واضحة بعزل ENC", tag_en:"Clear calls with AI ENC",
+  {id:"t110", img:"https://image01.realme.net/general/20250217/17397831135020ca4a6442f33410c8026043c0997040d.png", name:"realme Buds T110", series:"audio", kind:"buds", tag_ar:"مكالمات واضحة بعزل ENC", tag_en:"Clear calls with AI ENC",
    driver:"10mm", anc:"ENC للمكالمات", play:"حتى 38 ساعة مع العلبة", ip:"IPX5", bt:"5.4", codec:"AAC/SBC", accent:"#C9C2B5"},
 ];
-const SERIES = [["", "الكل", "All"], ["num", "سلسلة الأرقام", "Number"], ["p", "سلسلة P", "P series"], ["c", "سلسلة C", "C series"],
+const SERIES = [["", "الكل", "All"], ["num", "سلسلة الأرقام", "Number"], ["c", "سلسلة C", "C series"],
                 ["note", "سلسلة Note", "Note"], ["audio", "سماعات", "Audio"]];
 
 const ar = () => (typeof lang === "undefined" ? "ar" : lang) === "ar";
@@ -146,6 +134,9 @@ const css = `
 .bd .case{position:absolute;inset:auto 10px 0;height:70px;border-radius:30px;background:linear-gradient(160deg,color-mix(in srgb,var(--c) 85%,#fff),var(--c));box-shadow:inset 0 -6px 12px rgba(0,0,0,.25),0 18px 28px rgba(0,0,0,.45)}
 .bd .bud{position:absolute;top:6px;width:44px;height:58px;border-radius:24px 24px 18px 18px;background:linear-gradient(160deg,#fff,var(--c));box-shadow:0 10px 18px rgba(0,0,0,.4)}
 .bd .bud.l{left:26px;transform:rotate(-14deg)}.bd .bud.r{right:26px;transform:rotate(14deg)}
+.pimg{max-height:96%;max-width:92%;object-fit:contain;filter:drop-shadow(0 18px 26px rgba(0,0,0,.55));transition:transform .5s cubic-bezier(.2,.8,.2,1);position:relative;z-index:1}
+#cat .pc:hover .pimg{transform:translateY(-6px) scale(1.06)}
+#cat .pd-hero .big .pimg{max-height:92%;max-width:86%}
 /* صفحة الجهاز */
 #cat .pd{display:none}
 #cat.detail .list{display:none}
@@ -237,14 +228,18 @@ const st = document.createElement("style"); st.textContent = css; document.head.
 
 /* ---------------- الرسومات ---------------- */
 function phoneArt(p, color){
+  if (p.img && !p._noimg) return `<img class="pimg" src="${E(p.img)}" alt="${E(p.name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="catImgFail(this,'${p.id}')">`;
   if (p.kind === "buds") return `<div class="bd" style="--c:${color || p.accent}"><div class="case"></div><div class="bud l"></div><div class="bud r"></div></div>`;
-  if (p.img) return `<img src="${E(p.img)}" alt="${E(p.name)}" style="max-height:92%;max-width:80%;object-fit:contain;filter:drop-shadow(0 20px 30px rgba(0,0,0,.5))">`;
   const n = p.cams.length, ring = /ring/.test(p.cam);
   return `<div class="ph${ring ? " ring" : ""}" style="--c:${color || p.colors[0][1]}"><div class="cm" style="grid-template-columns:repeat(${n > 2 ? 2 : 1},18px)">${"<i></i>".repeat(Math.min(n, 4))}</div><div class="lg">realme</div></div>`;
 }
 const keyChips = p => p.kind === "buds"
   ? `<span>ANC <b>${E(p.anc)}</b></span><span>${E(p.driver)}</span><span>${E(p.ip)}</span>`
   : `<span><b>${p.batt.toLocaleString("en-US")}</b> mAh</span><span><b>${p.w}W</b></span><span>${p.hz}Hz</span><span>${E(p.chip.split(" (")[0].split(" / ")[0])}</span>`;
+
+// لو صورة الموقع الرسمي ماتحمّلتش (النت أو اللينك اتغير) ← نرجع للرسمة
+window.catImgFail = (el, id) => { const p = PRODUCTS.find(x => x.id === id); if (!p) return; p._noimg = true;
+  const w = document.createElement("div"); w.innerHTML = phoneArt(p); el.replaceWith(w.firstElementChild); };
 
 /* ---------------- مكونات الموبايل (14) — قيم الجهاز نفسه ---------------- */
 function parts(p){
@@ -344,8 +339,8 @@ function shell(){
     <div class="ct-f"><input type="search" id="ctq" placeholder="${E(T("دوّر بالاسم أو المعالج أو البطارية…", "Search by name, chipset or battery…"))}" value="${E(q)}">
       <div class="chs" id="cts">${SERIES.map(([k, a, e]) => `<button data-s="${k}" class="${k === fs ? "on" : ""}">${E(T(a, e))}</button>`).join("")}</div></div>
     <div class="grid" id="ctg"></div>
-    <div class="note">${E(T("المواصفات مجمّعة من مواقع realme الرسمية ومراجع تقنية، وممكن تختلف شوية حسب الإصدار المطروح في مصر. الرسومات توضيحية مش صور حقيقية للأجهزة.",
-      "Specs are compiled from realme's official sites and tech references and may differ slightly for the Egyptian variant. Illustrations are not real product photos."))}</div>
+    <div class="note">${E(T("الصور من موقع realme مصر الرسمي. المواصفات مجمّعة من مواقع realme الرسمية ومراجع تقنية، وممكن تختلف شوية حسب الإصدار المطروح في مصر.",
+      "Photos are from realme Egypt's official website. Specs are compiled from realme's official sites and tech references and may differ slightly for the Egyptian variant."))}</div>
   </div><div class="pd" id="ctd"></div></div>`;
   root.querySelector("#ctx").onclick = close;
   root.querySelector("#ctq").addEventListener("input", e => { q = e.target.value; grid(); });

@@ -45,15 +45,24 @@
   .tnav button{border:1px solid #CDD2DA;background:var(--sheet,#fff);border-radius:999px;padding:7px 14px;font-size:13.5px;cursor:pointer}
   .tnav button.pri{background:var(--ink,#17202B);color:#fff;border-color:var(--ink,#17202B)}
   .tourchip{background:var(--yel,#FFC915)!important;border-color:var(--yel,#FFC915)!important;color:var(--ink,#17202B)!important;font-weight:600}
+  #botMic,#botSpk{border:1px solid #CDD2DA!important;background:var(--sheet,#fff)!important;color:var(--ink,#17202B)!important;width:42px;padding:0!important;
+    border-radius:50%!important;display:grid;place-items:center;flex:none}
+  #botMic svg,#botSpk svg{width:19px;height:19px}
+  #botSpk{width:34px;height:34px;font-size:15px!important}
+  #botMic.on{background:#E5484D!important;border-color:#E5484D!important;color:#fff!important;animation:micp 1.3s ease-out infinite}
+  #botSpk.on{background:var(--yel,#FFC915)!important;border-color:var(--yel,#FFC915)!important}
+  @keyframes micp{0%{box-shadow:0 0 0 0 rgba(229,72,77,.55)}100%{box-shadow:0 0 0 14px rgba(229,72,77,0)}}
+  .bm.live{opacity:.65;font-style:italic}
+  @media (prefers-reduced-motion:reduce){#botMic.on{animation:none}}
   @media (max-width:520px){#botBox{inset-inline-end:8px;width:calc(100vw - 16px);bottom:calc(76px + env(safe-area-inset-bottom))}}`;
   const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
 
   const html = `
   <button id="botBtn" aria-label="Help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.2M12 16.5h.01"/></svg></button>
   <div id="botBox" class="hide" role="dialog">
-    <div class="bh"><div class="av">💬</div><b id="botName"></b><button id="botX" aria-label="Close">×</button></div>
+    <div class="bh"><div class="av">💬</div><b id="botName"></b><button id="botSpk" type="button" aria-label="Voice replies" title="🔊"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></button><button id="botX" aria-label="Close">×</button></div>
     <div id="botMsgs"></div>
-    <form id="botForm"><input id="botIn" autocomplete="off"><button type="submit" id="botSend"></button></form>
+    <form id="botForm"><button type="button" id="botMic" aria-label="Voice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg></button><input id="botIn" autocomplete="off"><button type="submit" id="botSend"></button></form>
   </div>`;
   document.body.insertAdjacentHTML("beforeend", html);
   const $b = id => document.getElementById(id);
@@ -71,8 +80,10 @@
     document.head.appendChild(s);
   }
 
-  const ar = () => (typeof lang === "undefined" ? "ar" : lang) === "ar";
-  const L = (o, k) => (o && (ar() ? o[k + "_ar"] : o[k + "_en"])) || (o && (o[k + "_ar"] || o[k + "_en"])) || "";
+  const LG = () => (typeof lang === "undefined" ? "ar" : lang);
+  const ar = () => LG() === "ar", zh = () => LG() === "zh";
+  const LI = () => (ar() ? 0 : zh() ? 2 : 1);
+  const L = (o, k) => (o && (o[k + "_" + LG()] || (zh() && o[k + "_en"]))) || (o && (o[k + "_ar"] || o[k + "_en"])) || "";
   const UI = {
     send: ["إرسال", "Send"], ph: ["اكتب سؤالك أو كود المحل…", "Ask a question or type a store code…"],
     hello: ["{greet} يا {name} 👋\nاسألني عن أي محل من محلاتك.", "{greet}, {name} 👋\nAsk me about any of your stores."],
@@ -105,7 +116,33 @@
     tourLogin: ["ادخل الأول، وبعدين اضغط «📘 شرح الصفحة» وأنا أشرحلك كل جزء.", "Sign in first, then tap \"📘 Step-by-step tour\" and I'll show you every part."],
     nostore: ["مش لاقي محل بالاسم ده عندك 🤔 جرّب الكود، أو اكتب الاسم زي ما هو مكتوب في قايمة المحلات.", "I couldn't find a store with that name. Try the code, or type the name as it appears in your list."], login: ["ادخل الأول عشان أقدر أقولك أرقام محلاتك.", "Sign in first so I can show your stores' numbers."],
   };
-  const u = (k, ...a) => UI[k][ar() ? 0 : 1].replace(/\{(\d)\}/g, (_, i) => a[+i]);
+  const ZHUI = {
+    send: "发送", ph: "输入问题或门店代码…", hello: "{greet}，{name} 👋\n问我任何一家门店。", helloOut: "欢迎 👋\n可以问我登录或激励的问题。",
+    tryLbl: "试试：", didYou: "我不太确定 🤔 你是指下面这些吗？", alsoQ: "相关问题：", about: "📍 关于 {0}",
+    papOk: "✔ 这家门店没有登记资料问题", papBad: "⚠ 资料问题：{0}", papBad0: "资料问题", papFiles: "{0} 个文件", papNoFile: "没有文件",
+    papOrig: "原件已收到 ✔", papNoOrig: "原件未收到", papSum: "已收到原件：{0} / {1}", faqLbl: "常见问题：",
+    found: "找到 {0} 家门店——输入代码以确定：", avail: "可用余额", used: "已使用", bank: "银行余额", open: "打开对账单",
+    paper0: "你的门店都没有资料问题 ✔", paperN: "有资料问题的门店（{0}）：", total: "你有 {0} 家门店——可用余额合计 {1}，已使用 {2}。",
+    more: "其他问题：", whichStore: "哪家门店？输入代码或名称——或者输入“所有门店”。",
+    whichPeriod: "要哪一天或哪个月的订单？（例如：今天、15/11、十一月、上个月）",
+    badPeriod: "我看不懂这个日期 🤔 输入像 15/11 这样的日期或像十一月这样的月份，或从下面选择。",
+    today: "今天", yday: "昨天", thisM: "本月", lastM: "上个月", allT: "全部时间", ordOf: "{0} 的订单——{1}", allStores: "你所有的门店",
+    nOrd: "订单", nRet: "退货", net: "净额", pcs: "件", noOrd: "这个期间没有订单或退货。", incOf: "{0} 的激励", opening: "结转", incN: "激励",
+    tour: "📘 分步导览", next: "下一步", prev: "上一步", end: "结束", step: "第 {0} 步，共 {1} 步",
+    tourLogin: "请先登录，然后点“📘 分步导览”，我会带你看每个部分。",
+    nostore: "找不到这个名字的门店 🤔 试试代码，或者按门店列表里的写法输入名称。", login: "请先登录，我才能告诉你门店的数据。",
+    micOn: "🎙 我在听…", micErr: "麦克风没有权限——请在浏览器里允许麦克风。", micNo: "这个浏览器不支持语音——请用 Chrome。",
+    voiceOn: "🔊 语音回复已开启", voiceOff: "🔇 语音回复已关闭", noVoice: "这部设备上没有中文语音——我会用文字回答。",
+  };
+  const VUI = {
+    micOn: ["🎙 بسمعك… اتكلم", "🎙 Listening… go ahead"], micErr: ["المايك مش متاح — اسمح للمتصفح يستخدم المايك.", "Microphone blocked — allow microphone access in your browser."],
+    micNo: ["المتصفح ده مش بيدعم الكلام — استخدم Chrome.", "This browser doesn't support voice — use Chrome."],
+    voiceOn: ["🔊 الرد بالصوت شغال", "🔊 Voice replies on"], voiceOff: ["🔇 الرد بالصوت اتقفل", "🔇 Voice replies off"],
+    noVoice: ["مفيش صوت عربي على الجهاز ده — هرد كتابة.", "No English voice on this device — I'll reply in text."],
+  };
+  Object.assign(UI, VUI);
+  for (const k in ZHUI) if (UI[k]) UI[k][2] = ZHUI[k];
+  const u = (k, ...a) => (UI[k][LI()] ?? UI[k][1]).replace(/\{(\d)\}/g, (_, i) => a[+i]);
   const E = s => (typeof esc === "function" ? esc(s) : String(s ?? ""));
   const F = n => (typeof fmt === "function" ? fmt(n) : String(n));
   const N = s => (typeof normAr === "function" ? normAr(s) : String(s || "").toLowerCase());
@@ -122,7 +159,7 @@
     const box = document.createElement("div"); box.className = "bchips";
     list.forEach(q => {
       const b = document.createElement("button"); b.type = "button"; b.textContent = L(q, "q");
-      b.onclick = () => { add("me", E(L(q, "q"))); add("bot", E(L(q, "a"))); };
+      b.onclick = () => { add("me", E(L(q, "q"))); const d = add("bot", E(L(q, "a"))); if (speakOn) speak(plain(d)); };
       box.appendChild(b);
     });
     msgs.appendChild(box); msgs.scrollTop = msgs.scrollHeight;
@@ -177,21 +214,22 @@
 
   function welcome() {
     const h = new Date().getHours();
-    const greet = ar() ? (h < 12 ? "صباح الخير" : "مساء الخير") : (h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening");
+    const greet = ar() ? (h < 12 ? "صباح الخير" : "مساء الخير") : zh() ? (h < 12 ? "早上好" : h < 18 ? "下午好" : "晚上好")
+                        : (h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening");
     const nm = (loggedIn() && data.who) ? String(data.who).trim().split(/\s+/) : [];
     const who = nm.length > 2 ? nm[0] : nm.join(" ");   // «مشرف الجيزة» كامل — «أحمد محمد علي» ← أحمد
     let txt = loggedIn() ? (L(CFG, "welcome") || u("hello")) : (L(CFG, "welcome_out") || u("helloOut"));
-    txt = txt.replace("{greet}", greet).replace(who ? "{name}" : /\s*(يا|,)?\s*\{name\}/, who);
+    txt = txt.replace("{greet}", greet).replace(who ? "{name}" : /\s*(يا|,|，)?\s*\{name\}/, who);
     const [first, ...rest] = txt.split("\n");
     const d = add("bot welcome", `<b>${E(first)}</b>${rest.length ? "<span>" + E(rest.join("\n")) + "</span>" : ""}`);
     if (loggedIn()) {
-      const tries = (ar() ? CFG.try_ar : CFG.try_en) || [];
+      const tries = CFG["try_" + LG()] || CFG.try_en || [];
       if (tries.length) {
         add("bot hint", E(u("tryLbl")));
         const box = document.createElement("div"); box.className = "bchips try";
         tries.forEach(q => {
           const b = document.createElement("button"); b.type = "button"; b.textContent = q;
-          b.onclick = () => { add("me", E(q)); answer(q.replace(/^[^\p{L}\p{N}]+/u, "")); };
+          b.onclick = () => { add("me", E(q)); ask(q.replace(/^[^\p{L}\p{N}]+/u, ""), false); };
           box.appendChild(b);
         });
         msgs.appendChild(box);
@@ -206,7 +244,7 @@
   function reset() {
     ctx = null; pend = null;
     msgs.innerHTML = "";
-    $b("botName").textContent = L(CFG, "name") || (ar() ? "المساعد" : "Assistant");
+    $b("botName").textContent = L(CFG, "name") || (ar() ? "المساعد" : zh() ? "助手" : "Assistant");
     $b("botIn").placeholder = u("ph"); $b("botSend").textContent = u("send");
     welcome();
   }
@@ -287,7 +325,25 @@
     if (_swFor !== data.ms) { _swFor = data.ms; _sw = new Set(data.ms.flatMap(m => W(`${m.code} ${m.name} ${m.region}`)).filter(w => w.length >= 3)); }
     return _sw;
   }
+  // صيني ← الكلمات اللي البوت بيفهمها (الصيني مافيهوش مسافات بين الكلمات)
+  const ZHMAP = [[/余额|多少钱|还剩|剩多少/, "رصيد"], [/激励|奖励|奖金|返利/, "حوافز"], [/订单|下单|销售|出货/, "اوردرات"], [/退货|退回/, "مرتجعات"],
+    [/净额|净/, "صافي"], [/资料|文件|证件|材料|单据/, "ورق"], [/今天|今日/, "النهارده"], [/昨天|昨日/, "امبارح"], [/本月|这个月/, "الشهر ده"],
+    [/上个月|上月/, "الشهر اللي فات"], [/全部时间|所有时间/, "كل الفترات"], [/怎么|如何|怎样/, "ازاي"], [/为什么/, "ليه"], [/什么时候|何时|几号|截止/, "امتى"],
+    [/详细对账单|借贷|欠款|应收/, "دائن مدين"], [/对账单|账单|明细/, "كشف"], [/登录|密码|用户名|登不上/, "دخول"], [/增值税|退税|税/, "فات"], [/收款|付款|回款/, "تحصيل"],
+    [/银行|存款|转账/, "بنك"], [/发票/, "فاتوره"], [/模板|表格|表单/, "نماذج"], [/编码|分店/, "تكويد"], [/所有门店|全部门店|所有店|我的门店/, "كل المحلات"],
+    [/合计|总计|总共|一共/, "اجمالي"], [/谁|哪些|哪家/, "مين"], [/意思|是什么/, "يعني"], [/导览|教程|介绍页面|带我看/, "شرح"],
+    [/语言|中文|英文/, "لغة"], [/手机|主屏幕|应用/, "تطبيق"], [/错|不对/, "غلط"], [/门店|店/, "محل"], [/原件/, "الاصل"]];
+  const ZHN = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10, "十一": 11, "十二": 12};
+  function zhCanon(q) {
+    if (!/[\u4e00-\u9fff]/.test(q)) return q;
+    q = q.replace(/(十[一二]?|[一二三四五六七八九])月/g, (_, n) => ZHN[n] + "月")
+         .replace(/(\d{1,2})月(\d{1,2})[日号]/g, " $2/$1 ").replace(/(\d{1,2})月/g, " شهر $1 ");
+    const add = ZHMAP.filter(([re]) => re.test(q)).map(([, w]) => w);
+    const rest = q.replace(/[\u4e00-\u9fff，。？！、：；“”‘’（）]+/g, " ");      // كود المحل أو أرقام مكتوبة جنب الصيني
+    return (rest + " " + add.join(" ")).replace(/\s+/g, " ").trim();
+  }
   function canon(q) {                       // السؤال + الكلمات اللي فهمها (بيتضافوا في الآخر)
+    q = zhCanon(q);
     const raw = String(q).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/الشهر دا\b/g, "الشهر ده");
     const add = new Set();
     for (const tok of raw.split(/\s+/)) {
@@ -340,7 +396,7 @@
       <span class="r"><span>${E(u("avail"))}</span><b class="num">${F(m.bal)}</b></span>
       <span class="r"><span>${E(u("used"))}</span><span class="num">${F(m.used)}</span></span>
       ${b ? `<span class="r"><span>${E(u("bank"))}</span><span class="num">${F(b.balance)}</span></span>` : ""}
-      ${m.bad ? `<span class="r" style="color:var(--red,#C2362B)">⚠ ${E(m.note || (ar() ? "مشكلة ورق" : "Paperwork issue"))}</span>` : ""}
+      ${m.bad ? `<span class="r" style="color:var(--red,#C2362B)">⚠ ${E(m.note || u("papBad0"))}</span>` : ""}
       <button type="button" data-open="${m.id}">${E(u("open"))}</button></span>`;
   }
   const FILLER = new Set(["في", "من", "على", "عن", "ايه", "اي", "انا", "انت", "هو", "هي", "ده", "دي", "دا", "اللي", "لو", "مش",
@@ -363,6 +419,18 @@
       }
       return {item, sc};
     }).filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc);
+  }
+  function zhBoost(q0, r) {                 // سؤال صيني: قارن أزواج الحروف مع q_zh
+    if (!/[\u4e00-\u9fff]/.test(q0)) return r;
+    const bg = s => { const t = String(s || "").replace(/[^\u4e00-\u9fff]/g, ""), o = new Set(); for (let i = 0; i < t.length - 1; i++) o.add(t.slice(i, i + 2)); return o; };
+    const qb = bg(q0); if (!qb.size) return r;
+    const m = new Map(r.map(x => [x.item, x.sc]));
+    QA.forEach(item => {
+      const d = bg(item.q_zh); let hit = 0; qb.forEach(b => { if (d.has(b)) hit++; });
+      const sc = hit / qb.size * 3;
+      if (sc > 0) m.set(item, (m.get(item) || 0) + sc);
+    });
+    return [...m].map(([item, sc]) => ({item, sc})).sort((a, b) => b.sc - a.sc);
   }
   function bestFaq(q) {
     const r = rankFaq(q);
@@ -434,7 +502,7 @@
     const box = document.createElement("div"); box.className = "bchips";
     ["today", "yday", "thisM", "lastM", "allT"].forEach(k => {
       const b = document.createElement("button"); b.type = "button"; b.textContent = u(k);
-      b.onclick = () => { add("me", E(u(k))); answer(u(k)); };
+      b.onclick = () => { add("me", E(u(k))); ask(u(k), false); };
       box.appendChild(b);
     });
     msgs.appendChild(box); msgs.scrollTop = msgs.scrollHeight;
@@ -448,8 +516,8 @@
     return open ? [open] : null;
   };
   const DOCS = ["tax_card", "commercial_reg", "contract", "ikhtar", "iqrar"];
-  const DOC_N = {tax_card: ["البطاقة الضريبية", "Tax card"], commercial_reg: ["السجل التجاري", "Commercial register"],
-                 contract: ["العقد", "Contract"], ikhtar: ["الإخطار", "Notification"], iqrar: ["الإقرار", "Declaration"]};
+  const DOC_N = {tax_card: ["البطاقة الضريبية", "Tax card", "税卡"], commercial_reg: ["السجل التجاري", "Commercial register", "商业登记"],
+                 contract: ["العقد", "Contract", "合同"], ikhtar: ["الإخطار", "Notification", "通知"], iqrar: ["الإقرار", "Declaration", "申报"]};
   function paperCard(m) {
     const ex = typeof extra !== "undefined" ? extra : {};
     const files = (ex.merchant_docs || []).filter(r => r.merchant_id === m.id);
@@ -458,7 +526,7 @@
     return `<span class="bstore"><span class="n">${E(m.name)}</span> <span class="num">${E(m.code)}</span>
       <span class="r" style="color:${m.bad ? "var(--red,#C2362B)" : "var(--green,#1E7B45)"}">${E(m.bad ? u("papBad", m.note || u("papBad0")) : u("papOk"))}</span>
       ${DOCS.map(typ => { const n = files.filter(r => r.doc_type === typ).length, ok = orig(typ);
-        return `<span class="r"><span>${E(DOC_N[typ][ar() ? 0 : 1])} <small style="color:var(--mute,#667085)">(${E(n ? u("papFiles", n) : u("papNoFile"))})</small></span>
+        return `<span class="r"><span>${E(DOC_N[typ][LI()])} <small style="color:var(--mute,#667085)">(${E(n ? u("papFiles", n) : u("papNoFile"))})</small></span>
           <span style="color:${ok ? "var(--green,#1E7B45)" : "var(--mute,#667085)"}">${E(ok ? u("papOrig") : u("papNoOrig"))}</span></span>`; }).join("")}
       <span class="r"><b>${E(u("papSum", nOrig, DOCS.length))}</b></span>
       <button type="button" data-open="${m.id}">${E(u("open"))}</button></span>`;
@@ -516,7 +584,7 @@
   function answer(q0) {
     buildSyn();
     const q = canon(q0), nq = N(q);
-    if (/شرح|اشرح|علمني|تعليمات|جوله|tutorial|tour|guide|walkthrough/i.test(nq)) return startTour();
+    if (/شرح|اشرح|علمني|تعليمات|جوله|tutorial|tour|guide|walkthrough/i.test(nq) && !/ازاي|how/.test(nq.replace(/شرح/, ""))) return startTour();
     const asksMeaning = /معناها|يعني|mean/.test(q);
     if (loggedIn() && !asksMeaning) {
       if (/ورق|paper/i.test(q) && !/[A-Za-z]*\d{3,}/.test(q) &&
@@ -532,7 +600,7 @@
       if (!/ازاي|إزاي|اكود|أكود|تكويد|ليه|امتى|إمتى|معاد|how|why|when/.test(q) && dataAnswer(q)) return;
       if (/رصيد|balance/i.test(q) && W(q).some(w => w.length >= 2 && !STOP.has(w))) return add("bot", E(u("nostore")));
     }
-    const r = rankFaq(q);
+    const r = zhBoost(q0, rankFaq(q));
     if (r.length && r[0].sc >= 0.9) {
       add("bot", E(L(r[0].item, "a")));
       const near = r.slice(1, 3).filter(x => x.sc >= r[0].sc * 0.8);
@@ -544,6 +612,90 @@
     add("bot", E(L(CFG, "not_found")));
     chips(starters());
   }
+
+  // ---------- الكلام بالصوت: مايك (كلام ← كتابة) + رد بالصوت + محادثة متواصلة
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const TTS = "speechSynthesis" in window ? window.speechSynthesis : null;
+  const LOC = () => (ar() ? "ar-EG" : zh() ? "zh-CN" : "en-US");
+  let rec = null, listening = false, convo = false, speakOn = false, warnedVoice = {};
+  try { speakOn = localStorage.getItem("rmg_bot_voice") === "1"; } catch (e) {}
+  function voiceFor(loc) {
+    const vs = TTS ? TTS.getVoices() : [], base = loc.slice(0, 2);
+    return vs.find(v => v.lang === loc) || vs.find(v => v.lang && v.lang.replace("_", "-").startsWith(base + "-")) || vs.find(v => v.lang === base) || null;
+  }
+  if (TTS) { TTS.getVoices(); TTS.onvoiceschanged = () => TTS.getVoices(); }
+  function plain(el) {                     // نص الرسالة للقراءة: من غير الأزرار والإيموجي
+    const c = el.cloneNode(true); c.querySelectorAll("button").forEach(b => b.remove());
+    const sep = ar() ? "، " : zh() ? "，" : ", ";
+    c.querySelectorAll(".bstore").forEach(b => b.insertAdjacentText("beforeend", zh() ? "。" : ". "));
+    c.querySelectorAll(".r").forEach(b => b.insertAdjacentText("beforeend", sep));
+    return c.textContent.replace(/(\d),(?=\d{3}\b)/g, "$1").replace(/(\d)\.00\b/g, "$1").replace(/(\d)\.(\d)/g, "$1\u2024$2").replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF\u2B00-\u2BFF✔✖⚠•📍]/gu, " ").replace(/\s+/g, " ").trim();
+  }
+  function speak(text, done) {
+    if (!TTS || !text) return done && done();
+    const v = voiceFor(LOC());
+    if (!v && !warnedVoice[LG()]) { warnedVoice[LG()] = 1; add("bot hint", E(u("noVoice"))); }
+    if (!v && !ar()) return done && done();
+    TTS.cancel();
+    const parts = text.match(/[^.!?؟。！？\n]{1,220}[.!?؟。！？\n]?/g) || [text];
+    let i = 0;
+    const next = () => {
+      if (i >= parts.length) return done && done();
+      const ut = new SpeechSynthesisUtterance(parts[i++].replace(/\u2024/g, ".")); ut.lang = LOC(); if (v) ut.voice = v; ut.rate = ar() ? 1 : 1.02;
+      ut.onend = next; ut.onerror = () => done && done(); TTS.speak(ut);
+    };
+    next();
+  }
+  function setSpk(on) {
+    speakOn = on; $b("botSpk").classList.toggle("on", on);
+    try { localStorage.setItem("rmg_bot_voice", on ? "1" : "0"); } catch (e) {}
+    if (!on && TTS) TTS.cancel();
+  }
+  function ask(q, viaVoice) {             // سؤال ← رد، ولو الصوت شغال البوت يقرا رده
+    const before = msgs.children.length;
+    answer(q);
+    if (!(speakOn || viaVoice)) return;
+    const fresh = [...msgs.children].slice(before).filter(el => el.classList.contains("bot") && !el.classList.contains("hint"));
+    const chipsTxt = [...msgs.children].slice(before).filter(el => el.classList.contains("bchips")).length;
+    const txt = fresh.map(plain).join(". ");
+    speak(txt || (chipsTxt ? u("didYou") : ""), () => { if (convo && !listening) setTimeout(listen, 350); });
+  }
+  let liveEl = null;
+  function listen() {
+    if (!SR) { add("bot", E(u("micNo"))); return; }
+    if (TTS) TTS.cancel();
+    rec = new SR(); rec.lang = LOC(); rec.interimResults = true; rec.maxAlternatives = 1; rec.continuous = false;
+    let final = "";
+    rec.onstart = () => { listening = true; $b("botMic").classList.add("on"); $b("botIn").placeholder = u("micOn"); };
+    rec.onresult = e => {
+      let txt = ""; final = "";
+      for (const r of e.results) { if (r.isFinal) final += r[0].transcript; else txt += r[0].transcript; }
+      const show = (final || txt).trim();
+      if (show) { if (!liveEl) liveEl = add("me live", ""); liveEl.textContent = show; }
+    };
+    rec.onerror = e => {
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") { convo = false; add("bot", E(u("micErr"))); }
+      if (e.error === "no-speech" && convo) { convo = false; }
+    };
+    rec.onend = () => {
+      listening = false; $b("botMic").classList.remove("on"); $b("botIn").placeholder = u("ph");
+      const q = (final || (liveEl && liveEl.textContent) || "").trim();
+      if (liveEl) { liveEl.classList.remove("live"); if (!q) liveEl.remove(); }
+      liveEl = null;
+      if (q) ask(q, true); else convo = false;
+    };
+    try { rec.start(); } catch (e) {}
+  }
+  $b("botMic").onclick = () => {
+    if (listening) { convo = false; try { rec.stop(); } catch (e) {} return; }
+    if (TTS && TTS.speaking) { TTS.cancel(); convo = false; return; }
+    convo = true;                          // محادثة: يسمع ← يرد بالصوت ← يسمع تاني لحد ما تدوس تاني أو تسكت
+    loadFaq(() => listen());
+  };
+  $b("botSpk").onclick = () => { setSpk(!speakOn); add("bot hint", E(u(speakOn ? "voiceOn" : "voiceOff"))); };
+  if (!SR) $b("botMic").style.display = "none";
+  if (!TTS) $b("botSpk").style.display = "none";
+  $b("botSpk").classList.toggle("on", speakOn);
 
   // ---------- الأحداث
   msgs.addEventListener("click", e => {
@@ -558,11 +710,11 @@
     if (!box.classList.contains("hide")) return box.classList.add("hide");
     loadFaq(() => { if (!msgs.childElementCount) reset(); box.classList.remove("hide"); if (window.innerWidth >= 700) $b("botIn").focus(); });
   };
-  $b("botX").onclick = () => { if (ti >= 0) endTour(); $b("botBox").classList.add("hide"); };
+  $b("botX").onclick = () => { if (ti >= 0) endTour(); convo = false; try { rec && rec.abort(); } catch (e) {} if (TTS) TTS.cancel(); $b("botBox").classList.add("hide"); };
   $b("botForm").onsubmit = e => {
     e.preventDefault();
     const q = $b("botIn").value.trim(); if (!q) return;
-    $b("botIn").value = ""; add("me", E(q)); answer(q);
+    $b("botIn").value = ""; add("me", E(q)); ask(q, false);
   };
   document.addEventListener("change", e => { if (e.target.matches && e.target.matches("select.lang") && loaded) reset(); });
 })();
