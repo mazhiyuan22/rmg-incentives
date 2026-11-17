@@ -363,7 +363,9 @@
     "balance", "store", "shop", "of", "the", "what", "is", "how", "much", "for", "show", "me",
     "ورق", "ورقه", "ورقة", "الورق", "اوراق", "أوراق", "سليم", "سليمه", "مظبوط", "كامل", "ناقص", "ولا", "لا", "هو", "هل", "بتاعه", "بتاعته",
     "بطاقه", "بطاقة", "ضريبيه", "ضريبية", "سجل", "تجاري", "عقد", "العقد", "اخطار", "إخطار", "اقرار", "إقرار", "اصول", "أصول", "الاصل", "الأصل",
-    "وصل", "وصلت", "استلمنا", "طيب", "و", "بقى", "paper", "papers", "documents", "ok", "complete", "his", "its"].map(N));
+    "وصل", "وصلت", "استلمنا", "طيب", "و", "بقى", "paper", "papers", "documents", "ok", "complete", "his", "its",
+    "كم", "بكم", "ما", "ماهو", "ماهي", "هي", "اريد", "أريد", "عاوز", "عايزه", "اعرف", "أعرف", "معرفه", "معرفة", "قولي", "قوللي", "شوف",
+    "لو", "سمحت", "فضلك", "من", "الخاص", "الخاصه", "بتاعت", "بتاعة", "بتاعها", "دلوقتي", "حاليا", "يا", "مساعد", "باقي", "فلوس"].map(N));
 
   buildSyn();
   function findStores(q) {
@@ -373,9 +375,15 @@
       if (c.length >= 3 && nq.includes(c)) out.push(m);
     }
     if (out.length) return out;
+    const runs = (q.match(/\d{3,}/g) || []);
+    for (const d of runs) {
+      const hit = data.ms.filter(m => String(m.code).replace(/\D/g, "").includes(d));
+      if (hit.length && hit.length <= 5) return hit;
+    }
     const MN = new Set(["يناير","فبراير","مارس","ابريل","مايو","يونيو","يوليو","اغسطس","سبتمبر","اكتوبر","نوفمبر","ديسمبر",
       "january","february","march","april","may","june","july","august","september","october","november","december"].map(N));
-    const ws = W(q).filter(w => w.length >= 2 && !STOP.has(w) && !MN.has(w) && !/^\d{1,4}$/.test(w));
+    const ws = W(q).filter(w => w.length >= 2 && !STOP.has(w) && !MN.has(w) && !/^\d{1,4}$/.test(w)
+                              && ![...forms(w), N("ال" + w)].some(f => SYN_REV.has(f) || STOP.has(f) || SYN[f] !== undefined));     // «الطلبات» = أوردرات مش اسم محل
     if (!ws.length) return [];
     const exact = data.ms.filter(m => { const h = N(`${m.name} ${m.region}`); return ws.every(w => h.includes(w)); });
     if (exact.length) return exact;
@@ -554,7 +562,8 @@
   function dataAnswer(q) {
     const intent = /ورق|اوراق|أوراق|مستند|بطاقه|بطاقة|سجل|عقد|اخطار|إخطار|اقرار|إقرار|اصول|أصول|الاصل|الأصل|paper|document|original/i.test(q) ? "paper" :
                    /اوردر|أوردر|اوردرات|أوردرات|طلبي|مرتجع|صافي|order|return|net/i.test(q) ? "orders" :
-                   /حافز|حوافز|incentive/i.test(q) ? "inc" : /رصيد|balance|كام/i.test(q) ? "bal" : null;
+                   /حافز|حوافز|incentive/i.test(q) ? "inc" : /رصيد|balance|كام|(^|\s)كم(\s|$)|فلوس|باقي/i.test(q) ? "bal" : null;
+    if (pend && intent && intent !== pend.intent) pend = null;   // سؤال جديد بنوع تاني ← ننسى اللي قبله
     if (pend) {                                   // تكملة لسؤال قبله
       if (!pend.stores) { const s2 = storesFrom(q); if (s2 === "many") return true; if (s2) { pend.stores = s2; cont(); return true; } }
       else if (pend.intent === "orders" && !pend.per) {
@@ -651,8 +660,30 @@
     try { localStorage.setItem("rmg_bot_voice", on ? "1" : "0"); } catch (e) {}
     if (!on && TTS) TTS.cancel();
   }
+  // الكلام بيتكتب بشكل مختلف عن الكتابة: أرقام بالحروف، كود المحل حرف حرف، علامات ترقيم
+  const NUMW = {"صفر": 0, "زيرو": 0, "واحد": 1, "واحده": 1, "اتنين": 2, "اثنين": 2, "إثنين": 2, "تلاته": 3, "تلاتة": 3, "ثلاثه": 3, "ثلاثة": 3,
+    "اربعه": 4, "أربعة": 4, "اربعة": 4, "أربعه": 4, "خمسه": 5, "خمسة": 5, "سته": 6, "ستة": 6, "سبعه": 7, "سبعة": 7, "تمانيه": 8, "تمانية": 8,
+    "ثمانيه": 8, "ثمانية": 8, "تسعه": 9, "تسعة": 9, "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+    "eight": 8, "nine": 9, "零": 0, "一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9};
+  const LETW = {"ان": "n", "إن": "n", "اين": "n", "ن": "n", "تي": "t", "ت": "t", "اس": "s", "إس": "s", "بي": "b", "سي": "c", "دي": "d", "اي": "a", "ام": "m", "إم": "m"};
+  function speechNorm(q) {
+    let t = String(q).replace(/[.,،؟?!؛:]+/g, " ").replace(/فور\s*جي/g, "4G").replace(/فايف\s*جي/g, "5G").replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+    const ws = t.split(/\s+/).filter(Boolean), out = [];
+    for (let i = 0; i < ws.length; i++) {
+      const w = ws[i], n = NUMW[w.toLowerCase()];
+      if (n !== undefined) { if (out.length && /^[a-z]?\d+$/i.test(out[out.length - 1]) && out[out.length - 1].length < 9) out[out.length - 1] += n; else out.push(String(n)); continue; }
+      if (/^\d+$/.test(w) && out.length && /^[a-z]?\d+$/i.test(out[out.length - 1])) { out[out.length - 1] += w; continue; }
+      const L = LETW[w.toLowerCase()], nx = ws[i + 1] || "";
+      if (L && (NUMW[nx.toLowerCase()] !== undefined || /^\d/.test(nx))) { out.push(L); continue; }      // «إن» قبل رقم = حرف الكود
+      if (L && out.length && /^[a-z]?\d+$/i.test(out[out.length - 1]) && L.length === 1) { out[out.length - 1] += L; continue; }   // «تي» بعد رقم
+      out.push(w);
+    }
+    // حرف + رقم جنب بعض ← كود واحد (n 00294 t → n00294t)
+    return out.join(" ").replace(/\b([a-z])\s+(\d{3,})/gi, "$1$2");
+  }
   function ask(q, viaVoice) {             // سؤال ← رد، ولو الصوت شغال البوت يقرا رده
     const before = msgs.children.length;
+    if (viaVoice) q = speechNorm(q);
     answer(q);
     if (!(speakOn || viaVoice)) return;
     const fresh = [...msgs.children].slice(before).filter(el => el.classList.contains("bot") && !el.classList.contains("hint"));
